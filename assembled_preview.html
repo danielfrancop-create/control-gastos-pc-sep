@@ -4022,6 +4022,8 @@
             }
         }
 
+        window.showView = showView;
+
         function showView(viewName) {
             if (currentUserRole === 'view' && (viewName === 'data_entry' || viewName === 'obligaciones' || viewName === 'caja_general')) {
                 alert("Tu usuario solo tiene permisos de LECTURA (Ver Solo). No puedes acceder a este módulo.");
@@ -4040,7 +4042,6 @@
             const estadoResultadosView = document.getElementById("estadoResultadosView");
             const obligacionesFormView = document.getElementById("obligacionesFormView");
             const cajaGeneralView = document.getElementById("cajaGeneralView");
-            const ingresosExternosView = document.getElementById("ingresosExternosView");
             const mapaLotesView = document.getElementById("mapaLotesView");
 
             const navButtons = document.querySelectorAll(".module-nav-btn");
@@ -4053,7 +4054,6 @@
             if (estadoResultadosView) estadoResultadosView.classList.add("hidden");
             if (obligacionesFormView) obligacionesFormView.classList.add("hidden");
             if (cajaGeneralView) cajaGeneralView.classList.add("hidden");
-            if (ingresosExternosView) ingresosExternosView.classList.add("hidden");
             if (mapaLotesView) mapaLotesView.classList.add("hidden");
 
             // Enable selector by default
@@ -4117,11 +4117,6 @@
                     if (cajaGeneralView) {
                         cajaGeneralView.classList.remove("hidden");
                         renderCajaGeneralModule();
-                    }
-                } else if (viewName === 'ingresos_externos') {
-                    if (ingresosExternosView) {
-                        ingresosExternosView.classList.remove("hidden");
-                        renderIngresosExternosModule();
                     }
                 } else if (viewName === 'mapa_lotes') {
                     if (mapaLotesView) {
