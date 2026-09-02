@@ -29,6 +29,7 @@
         <?!= include('ViewCashflow'); ?>
         <?!= include('ViewLoans'); ?>
         <?!= include('ViewPersonalExpenses'); ?>
+        <?!= include('ViewExternalIncome'); ?>
         <?!= include('ViewMap'); ?>
     </main>
 

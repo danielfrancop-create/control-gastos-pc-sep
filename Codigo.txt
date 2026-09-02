@@ -11,6 +11,9 @@ var HOJA_PRESTAMOS = "prestamos";
 var HOJA_CICLOS = "ciclos";
 var HOJA_GASTOS_PERSONALES = "gastosPersonales";
 var HOJA_FOTOS_LOTES = "fotosLotes";
+var HOJA_INGRESOS_EXTERNOS = "ingresosExternos";
+var HOJA_METAS_RECOLECCION = "metasRecoleccion";
+var HOJA_APORTES_METAS = "aportesMetas";
 
 function doGet() {
   return HtmlService.createTemplateFromFile("index")
@@ -122,10 +125,103 @@ function getDashboardData() {
       prestamos: getSheetData(ss, HOJA_PRESTAMOS),
       ciclos: getSheetData(ss, HOJA_CICLOS),
       gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES),
-      fotosLotes: getSheetData(ss, HOJA_FOTOS_LOTES)
+      fotosLotes: getSheetData(ss, HOJA_FOTOS_LOTES),
+      ingresosExternos: getSheetData(ss, HOJA_INGRESOS_EXTERNOS),
+      metasRecoleccion: getSheetData(ss, HOJA_METAS_RECOLECCION),
+      aportesMetas: getSheetData(ss, HOJA_APORTES_METAS)
     };
 
     return { success: true, data: data };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+/**
+ * Funciones independientes para Gestión de Ingresos Externos y Metas de Recolección
+ */
+function registrarIngresoExterno(datos) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(HOJA_INGRESOS_EXTERNOS);
+    var columnsNeeded = ["ID_Ingreso_Externo", "Fecha", "Fuente_Origen", "Monto_COP", "Metodo_Pago", "Notas"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_INGRESOS_EXTERNOS);
+      sheet.appendRow(columnsNeeded);
+    }
+    asegurarColumnas(sheet, columnsNeeded);
+
+    var lastRow = sheet.getLastRow();
+    var nextId = "IE-" + String(lastRow < 2 ? 1 : lastRow).padStart(3, '0');
+
+    var fecha = datos.Fecha || datos.fecha || formatDateNative(new Date());
+    var fuente = datos.Fuente_Origen || datos.fuente_origen || datos.Fuente || datos.fuente || "Trabajo Externo";
+    var monto = Number(datos.Monto_COP || datos.monto_cop || datos.Monto || datos.monto) || 0;
+    var metodo = datos.Metodo_Pago || datos.metodo_pago || "Transferencia";
+    var notas = datos.Notas || datos.notas || "";
+
+    sheet.appendRow([nextId, fecha, fuente, monto, metodo, notas]);
+    return { success: true, idGenerado: nextId, message: "Ingreso externo registrado correctamente." };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function crearMetaRecoleccion(datos) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(HOJA_METAS_RECOLECCION);
+    var columnsNeeded = ["ID_Meta", "Nombre_Meta", "Monto_Objetivo_COP", "Fecha_Creacion", "Fecha_Limite", "Categoria", "Estado", "Notas"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_METAS_RECOLECCION);
+      sheet.appendRow(columnsNeeded);
+    }
+    asegurarColumnas(sheet, columnsNeeded);
+
+    var lastRow = sheet.getLastRow();
+    var nextId = "META-" + String(lastRow < 2 ? 1 : lastRow).padStart(3, '0');
+
+    var nombre = datos.Nombre_Meta || datos.nombre_meta || datos.Nombre || datos.nombre || "Meta Ahorro";
+    var montoObj = Number(datos.Monto_Objetivo_COP || datos.monto_objetivo_cop || datos.Monto_Objetivo || datos.monto_objetivo) || 0;
+    var fechaCreacion = datos.Fecha_Creacion || datos.fecha_creacion || formatDateNative(new Date());
+    var fechaLimite = datos.Fecha_Limite || datos.fecha_limite || "";
+    var categoria = datos.Categoria || datos.categoria || "Otros";
+    var estado = datos.Estado || datos.estado || "EN PROCESO";
+    var notas = datos.Notas || datos.notas || "";
+
+    sheet.appendRow([nextId, nombre, montoObj, fechaCreacion, fechaLimite, categoria, estado, notas]);
+    return { success: true, idGenerado: nextId, message: "Meta de recolección creada correctamente." };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function aportarAMetaRecoleccion(datos) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(HOJA_APORTES_METAS);
+    var columnsNeeded = ["ID_Aporte", "ID_Meta", "Nombre_Meta", "Fecha", "Monto_Aporte_COP", "Origen_Fondos", "Notas"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_APORTES_METAS);
+      sheet.appendRow(columnsNeeded);
+    }
+    asegurarColumnas(sheet, columnsNeeded);
+
+    var lastRow = sheet.getLastRow();
+    var nextId = "APORTE-" + String(lastRow < 2 ? 1 : lastRow).padStart(3, '0');
+
+    var idMeta = datos.ID_Meta || datos.id_meta || "";
+    var nombreMeta = datos.Nombre_Meta || datos.nombre_meta || "";
+    var fecha = datos.Fecha || datos.fecha || formatDateNative(new Date());
+    var monto = Number(datos.Monto_Aporte_COP || datos.monto_aporte_cop || datos.Monto || datos.monto) || 0;
+    var origen = datos.Origen_Fondos || datos.origen_fondos || "Ingreso Externo";
+    var notas = datos.Notas || datos.notas || "";
+
+    sheet.appendRow([nextId, idMeta, nombreMeta, fecha, monto, origen, notas]);
+    return { success: true, idGenerado: nextId, message: "Aporte registrado correctamente." };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
@@ -1209,6 +1305,9 @@ function eliminarRegistroSeguro(tipoTabla, idRegistro, codigoSeguridad) {
     else if (tipoTabla === "ventas" || tipoTabla === "venta") sheetName = HOJA_VENTAS;
     else if (tipoTabla === "gastosPersonales" || tipoTabla === "personal") sheetName = HOJA_GASTOS_PERSONALES;
     else if (tipoTabla === "fotosLotes" || tipoTabla === "foto") sheetName = HOJA_FOTOS_LOTES;
+    else if (tipoTabla === "ingresosExternos" || tipoTabla === "ingresoExterno") sheetName = HOJA_INGRESOS_EXTERNOS;
+    else if (tipoTabla === "metasRecoleccion" || tipoTabla === "metaRecoleccion") sheetName = HOJA_METAS_RECOLECCION;
+    else if (tipoTabla === "aportesMetas" || tipoTabla === "aporteMeta") sheetName = HOJA_APORTES_METAS;
     else return { success: false, message: "Tipo de tabla no válido." };
 
     var sheet = ss.getSheetByName(sheetName);
@@ -1223,7 +1322,7 @@ function eliminarRegistroSeguro(tipoTabla, idRegistro, codigoSeguridad) {
     var codeColIdx = -1;
     for (var c = 0; c < headers.length; c++) {
       var h = headers[c].toString().trim();
-      if (h === "Codigo_Seguimiento" || h === "Codigo_General" || h === "ID_Gasto_Personal" || h === "ID_Foto") {
+      if (h === "Codigo_Seguimiento" || h === "Codigo_General" || h === "ID_Gasto_Personal" || h === "ID_Foto" || h === "ID_Ingreso_Externo" || h === "ID_Meta" || h === "ID_Aporte") {
         codeColIdx = c + 1;
         break;
       }

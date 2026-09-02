@@ -1,0 +1,337 @@
+<div id="ingresosExternosView" class="hidden max-w-7xl mx-auto space-y-8">
+    <!-- Header Módulo -->
+    <div class="bg-indigo-900 rounded-3xl shadow-xl border border-slate-100 overflow-hidden text-white p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                <span class="p-2 bg-indigo-800 rounded-xl">
+                    <svg class="h-6 w-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </span>
+                Gestión de Ingresos Externos y Metas de Recolección
+            </h2>
+            <p class="text-xs text-indigo-200 mt-1">Registro de capital externo a la finca, definición de metas financieras con plazo fijo y cálculo automático del ritmo necesario de ahorro.</p>
+        </div>
+        <span class="px-3 py-1 bg-indigo-800 text-indigo-300 text-[11px] font-bold uppercase tracking-wider rounded-full border border-indigo-700/50">Módulo Independiente</span>
+    </div>
+
+    <!-- Metricas KPI del Módulo -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Ingresos Externos</span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1" id="kpiTotalIngresosExternos">$0</h2>
+                </div>
+                <span class="p-2.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded-xl">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </span>
+            </div>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-4 pt-2 border-t border-slate-50 dark:border-slate-800">
+                Inyecciones de capital ajenas a la producción agrícola
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metas de Ahorro Activas</span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-1" id="kpiMetasActivasCount">0 Metas</h2>
+                </div>
+                <span class="p-2.5 bg-amber-50 dark:bg-amber-950 text-amber-600 rounded-xl">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </span>
+            </div>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-4 pt-2 border-t border-slate-50 dark:border-slate-800">
+                Objetivos de recolección en proceso
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Recaudado en Metas</span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1" id="kpiTotalRecaudadoMetas">$0</h2>
+                </div>
+                <span class="p-2.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 rounded-xl">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </span>
+            </div>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-4 pt-2 border-t border-slate-50 dark:border-slate-800">
+                Suma acumulada de todos los aportes realizados
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Faltante General por Recaudar</span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-1" id="kpiTotalFaltanteMetas">$0</h2>
+                </div>
+                <span class="p-2.5 bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-xl">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </span>
+            </div>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-4 pt-2 border-t border-slate-50 dark:border-slate-800">
+                Monto pendiente para alcanzar el 100% del objetivo
+            </p>
+        </div>
+    </div>
+
+    <!-- Formulares: Registro de Ingreso Externo & Crear Meta -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Formulario A: Registrar Ingreso Externo -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-5">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="p-1.5 bg-indigo-100 text-indigo-800 rounded-lg">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </span>
+                    1. Registrar Ingreso Externo
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">Registra capital proveniente de trabajos externos, préstamos personales, giros o ventas fuera de la finca.</p>
+            </div>
+
+            <form id="ingresoExternoForm" onsubmit="handleGuardarIngresoExterno(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha *</label>
+                        <input type="date" id="extIngresoFecha" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 border shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fuente / Origen *</label>
+                        <input type="text" id="extIngresoFuente" required placeholder="p.ej. Consultoría externa, Empleo, Giro familiar..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 border shadow-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto (COP) *</label>
+                        <div class="relative rounded-xl shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-slate-400 text-xs font-bold">$</span></div>
+                            <input type="number" step="any" id="extIngresoMonto" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 border shadow-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Método de Pago *</label>
+                        <select id="extIngresoMetodo" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 border shadow-sm cursor-pointer">
+                            <option value="Transferencia">Transferencia Bancaria</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Nequi/Daviplata">Nequi / Daviplata</option>
+                            <option value="Cheque/Otro">Cheque / Otro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Observaciones / Notas</label>
+                    <input type="text" id="extIngresoNotas" placeholder="Detalles adicionales del ingreso..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 border shadow-sm">
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition cursor-pointer">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span>Registrar Ingreso Externo</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Formulario B: Crear Meta de Recolección con Fecha Límite -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-5">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="p-1.5 bg-amber-100 text-amber-800 rounded-lg">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </span>
+                    2. Crear Meta de Recolección / Ahorro
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">Define metas financieras con monto objetivo y fecha límite para calcular el ritmo diario y semanal requerido.</p>
+            </div>
+
+            <form id="crearMetaForm" onsubmit="handleCrearMeta(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Nombre de la Meta *</label>
+                    <input type="text" id="extMetaNombre" required placeholder="p.ej. Compra Guadañadora, Reserva Fértiles 2026, Fondo Emergencia..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto Objetivo (COP) *</label>
+                        <div class="relative rounded-xl shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-slate-400 text-xs font-bold">$</span></div>
+                            <input type="number" step="any" id="extMetaMontoObjetivo" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha Límite *</label>
+                        <input type="date" id="extMetaFechaLimite" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Categoría / Propósito</label>
+                        <select id="extMetaCategoria" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm cursor-pointer">
+                            <option value="Maquinaria/Equipos">Maquinaria & Equipos</option>
+                            <option value="Insumos Agricolas">Insumos & Fertilizantes</option>
+                            <option value="Infraestructura">Infraestructura & Construcción</option>
+                            <option value="Fondo de Reserva">Fondo de Reserva / Emergencia</option>
+                            <option value="Inversión Familiar">Inversión Personal / Familiar</option>
+                            <option value="Otro">Otro Propósito</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Notas / Detalles</label>
+                        <input type="text" id="extMetaNotas" placeholder="Notas sobre la meta..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition cursor-pointer">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span>Crear Meta con Plazo</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Formulario C: Registrar Aporte a Meta -->
+    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-4">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-lg">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </span>
+                3. Registrar Aporte a Meta de Recolección
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Añade un abono o aporte directo a cualquiera de las metas activas.</p>
+        </div>
+
+        <form id="aporteMetaForm" onsubmit="handleGuardarAporteMeta(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Seleccionar Meta *</label>
+                    <select id="extAporteMetaSelect" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-bold focus:ring-2 focus:ring-emerald-500 border shadow-sm cursor-pointer">
+                        <option value="">Cargando metas...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha de Aporte *</label>
+                    <input type="date" id="extAporteFecha" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto del Aporte (COP) *</label>
+                    <div class="relative rounded-xl shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-slate-400 text-xs font-bold">$</span></div>
+                        <input type="number" step="any" id="extAporteMonto" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-emerald-500 border shadow-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Origen de Fondos</label>
+                    <select id="extAporteOrigen" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2.5 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm cursor-pointer">
+                        <option value="Ingreso Externo">Ingreso Externo</option>
+                        <option value="Caja Real Finca">Caja Real Finca</option>
+                        <option value="Ahorro Personal">Ahorro Personal</option>
+                        <option value="Otro">Otro Origen</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-1">
+                <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition cursor-pointer">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span>Guardar Aporte</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Visualización de Metas de Recolección con Ritmo Calculado -->
+    <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+                <h3 class="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>🎯</span> Panel de Control de Metas & Ritmo de Recolección
+                </h3>
+                <p class="text-xs text-slate-400">Total recaudado vs. faltante, tiempo restante exacto y cálculo automático de ritmo diario/semanal.</p>
+            </div>
+        </div>
+
+        <div id="metasCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Se poblará dinámicamente con JS -->
+        </div>
+    </div>
+
+    <!-- Tablas Históricas: Ingresos Externos & Aportes a Metas -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Tabla Historial de Ingresos Externos -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden space-y-3 p-5">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-3 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Historial de Ingresos Externos</h3>
+                <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950 px-2.5 py-1 rounded-full" id="extIngresosCount">0 registros</span>
+            </div>
+            <div class="overflow-x-auto w-full max-h-[300px]">
+                <table class="min-w-full divide-y divide-slate-100 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-2 text-left font-bold text-slate-400">Fecha</th>
+                            <th class="px-3 py-2 text-left font-bold text-slate-400">Fuente</th>
+                            <th class="px-3 py-2 text-right font-bold text-slate-400">Monto (COP)</th>
+                            <th class="px-3 py-2 text-center font-bold text-slate-400">Método</th>
+                            <th class="px-3 py-2 text-center font-bold text-slate-400">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="extIngresosTableBody">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla Historial de Aportes a Metas -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden space-y-3 p-5">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-3 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Historial de Aportes a Metas</h3>
+                <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full" id="extAportesCount">0 aportes</span>
+            </div>
+            <div class="overflow-x-auto w-full max-h-[300px]">
+                <table class="min-w-full divide-y divide-slate-100 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-2 text-left font-bold text-slate-400">Fecha</th>
+                            <th class="px-3 py-2 text-left font-bold text-slate-400">Meta</th>
+                            <th class="px-3 py-2 text-right font-bold text-slate-400">Aporte (COP)</th>
+                            <th class="px-3 py-2 text-left font-bold text-slate-400">Origen</th>
+                            <th class="px-3 py-2 text-center font-bold text-slate-400">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="extAportesTableBody">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
