@@ -297,8 +297,34 @@ function guardarFotoLote(datos) {
     var urlDrive = datos.Url_Foto_Drive || datos.url_foto_drive || "";
     var base64Data = datos.Base64_Data || datos.base64_data || "";
 
+    // Upload to Google Drive if base64 file data is present
+    if (base64Data && typeof DriveApp !== 'undefined') {
+      try {
+        var folderName = "Finca Los Sauces - Fotos Lotes";
+        var folders = DriveApp.getFoldersByName(folderName);
+        var targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+
+        var mimeType = "image/jpeg";
+        var base64Clean = base64Data;
+        if (base64Data.indexOf("data:") === 0) {
+          var parts = base64Data.split(",");
+          base64Clean = parts[1];
+          var mimeMatch = parts[0].match(/data:(.*?);/);
+          if (mimeMatch && mimeMatch[1]) mimeType = mimeMatch[1];
+        }
+
+        var bytes = Utilities.base64Decode(base64Clean);
+        var blob = Utilities.newBlob(bytes, mimeType, idFoto + "_" + lote.replace(/\s+/g, "") + ".jpg");
+        var driveFile = targetFolder.createFile(blob);
+        driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        urlDrive = driveFile.getUrl();
+      } catch (driveErr) {
+        Logger.log("Error subiendo foto a Drive: " + driveErr.toString());
+      }
+    }
+
     sheet.appendRow([idFoto, lote, fecha, titulo, descripcion, urlDrive, base64Data]);
-    return { success: true, idFoto: idFoto, message: "Fotografía guardada con éxito." };
+    return { success: true, idFoto: idFoto, urlDrive: urlDrive, message: "Fotografía guardada con éxito." };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
@@ -1105,7 +1131,8 @@ function obtenerBalanceCajaGeneral(filtros) {
       gastosIniciales: getSheetData(ss, HOJA_GASTOS_INICIALES),
       gastosDesarrollo: getSheetData(ss, HOJA_GASTOS_DESARROLLO),
       ventas: getSheetData(ss, HOJA_VENTAS),
-      gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES)
+      gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES),
+      ingresosExternos: getSheetData(ss, HOJA_INGRESOS_EXTERNOS)
     };
 
     var fechaInicio = filtros ? filtros.fechaInicio : null;
@@ -1128,16 +1155,21 @@ function obtenerBalanceCajaGeneral(filtros) {
 
     var cajaRealAgricola = ventasCobradas - gastosAgricolasPagados;
 
+    var ingresosExternosTotales = data.ingresosExternos
+      .filter(function(x) { return isDateOk(x.Fecha || x.fecha); })
+      .reduce(function(sum, x) { return sum + (Number(x.Monto_COP || x.monto_cop || x.Monto || x.monto) || 0); }, 0);
+
     var gastosPersonalesTotales = data.gastosPersonales
       .filter(function(x) { return isDateOk(x.Fecha || x.fecha); })
       .reduce(function(sum, x) { return sum + (Number(x.Monto_COP || x.monto_cop) || 0); }, 0);
 
-    var saldoLiquidoDisponible = cajaRealAgricola - gastosPersonalesTotales;
+    var saldoLiquidoDisponible = (cajaRealAgricola + ingresosExternosTotales) - gastosPersonalesTotales;
 
     return {
       success: true,
       metrics: {
         cajaRealAgricola: cajaRealAgricola,
+        ingresosExternosTotales: ingresosExternosTotales,
         gastosPersonalesTotales: gastosPersonalesTotales,
         saldoLiquidoDisponible: saldoLiquidoDisponible,
         ventasCobradas: ventasCobradas,

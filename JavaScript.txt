@@ -2953,6 +2953,7 @@
         function renderCajaGeneralModule() {
             if (!rawData) return;
             if (!rawData.gastosPersonales) rawData.gastosPersonales = [];
+            if (!rawData.ingresosExternos) rawData.ingresosExternos = [];
 
             // 1. Calculate Caja Real Agrícola
             const ventasCobradas = (rawData.ventas || [])
@@ -2965,16 +2966,23 @@
 
             const cajaRealAgricola = ventasCobradas - gastosAgricolasPagados;
 
-            // 2. Calculate Gastos Personales Totales
+            // 2. Calculate Ingresos Externos / Extras Totales
+            const totalIngresosExternos = (rawData.ingresosExternos || [])
+                .reduce((sum, x) => sum + (Number(x.Monto_COP || x.monto_cop || x.Monto || x.monto) || 0), 0);
+
+            // 3. Calculate Gastos Personales Totales
             const totalGastosPersonales = (rawData.gastosPersonales || [])
                 .reduce((sum, x) => sum + (Number(x.Monto_COP || x.monto_cop) || 0), 0);
 
-            // 3. Saldo Líquido Disponible
-            const saldoLiquidoDisponible = cajaRealAgricola - totalGastosPersonales;
+            // 4. Saldo Líquido Disponible = (Caja Finca + Ingresos Externos) - Gastos Hogar
+            const saldoLiquidoDisponible = (cajaRealAgricola + totalIngresosExternos) - totalGastosPersonales;
 
             // Update KPI Cards
             const kpiCajaEl = document.getElementById("kpiCajaRealAgricola");
             if (kpiCajaEl) kpiCajaEl.textContent = formatCOP(cajaRealAgricola);
+
+            const kpiExtEl = document.getElementById("kpiIngresosExternos");
+            if (kpiExtEl) kpiExtEl.textContent = formatCOP(totalIngresosExternos);
 
             const kpiPersEl = document.getElementById("kpiGastosPersonales");
             if (kpiPersEl) kpiPersEl.textContent = formatCOP(totalGastosPersonales);
@@ -2984,6 +2992,9 @@
                 kpiSaldoEl.textContent = formatCOP(saldoLiquidoDisponible);
                 kpiSaldoEl.className = `text-2xl font-extrabold mt-1 ${saldoLiquidoDisponible >= 0 ? 'text-sky-600 dark:text-sky-400' : 'text-rose-600 dark:text-rose-400'}`;
             }
+
+            // Render sub-section of external incomes & metas
+            renderIngresosExternosModule();
 
             // Set default date for form if empty
             const dateInput = document.getElementById("gastoPersonalFecha");
@@ -5499,21 +5510,25 @@
                 }
 
                 if (typeof google === 'undefined' || !google.script || !google.script.run) {
-                    alert("¡Información registrada con éxito!");
+                    alert("¡Fotografía guardada con éxito!");
                 } else {
                     google.script.run
                         .withSuccessHandler(function(response) {
                             if (response && response.success) {
-                                alert("¡Información registrada con éxito!");
+                                if (response.urlDrive) {
+                                    record.Url_Foto_Drive = response.urlDrive;
+                                    renderPhotoGallery();
+                                }
+                                alert("¡Fotografía guardada y subida a Google Drive con éxito!");
                             } else {
                                 saveOfflineRecord("fotosLotes", record).then(() => {
-                                    alert("¡Información registrada con éxito! (Guardado localmente sin conexión)");
+                                    alert("¡Fotografía guardada localmente!");
                                 });
                             }
                         })
                         .withFailureHandler(function(err) {
                             saveOfflineRecord("fotosLotes", record).then(() => {
-                                alert("¡Información registrada con éxito! (Guardado localmente sin conexión)");
+                                alert("¡Fotografía guardada localmente sin conexión!");
                             });
                         })
                         .guardarFotoLote(record);
