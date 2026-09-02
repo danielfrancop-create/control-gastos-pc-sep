@@ -615,6 +615,36 @@ function getConsolidatedData(fechaInicio, fechaFin, lote, cultivo) {
   return obtenerDatosConsolidados({ fechaInicio: fechaInicio, fechaFin: fechaFin, lote: lote, cultivo: cultivo });
 }
 
+function obtenerListaLotesActivos(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  var list = [];
+  var ciclosSheet = ss.getSheetByName(HOJA_CICLOS);
+
+  if (ciclosSheet && ciclosSheet.getLastRow() >= 2) {
+    var ciclosData = leerTablaHoja(HOJA_CICLOS);
+    ciclosData.forEach(function(c) {
+      var estado = String(c.Estado || c.estado || '').toUpperCase();
+      if (estado === 'EN PROCESO' || estado === 'ACTIVO') {
+        var lp = String(c.Lote_Principal || c.lote_principal || c.Lote || c.lote || '').trim();
+        var match = lp.match(/^(Lote\s*\d+)/i);
+        var loteName = match ? match[1] : lp;
+        if (loteName && list.indexOf(loteName) === -1) {
+          list.push(loteName);
+        }
+      }
+    });
+  }
+
+  // Fallback if no active cycles registered: default to all 16 lotes
+  if (list.length === 0) {
+    for (var i = 1; i <= 16; i++) {
+      list.push("Lote " + i);
+    }
+  }
+
+  return list;
+}
+
 function guardarRegistro(tipo, datos) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -655,6 +685,77 @@ function guardarRegistro(tipo, datos) {
     var cliente = datos.Cliente_Deudor_Proveedor || datos.cliente_deudor_proveedor || datos.Comprador || datos.comprador || "";
     var fechaVenc = datos.Fecha_Vencimiento || datos.fecha_vencimiento || "";
     var fechaPagoReal = estadoPago === "PAGADO" ? (datos.Fecha_Pago_Realizado || datos.fecha_pago_realizado || datos.Fecha || datos.fecha || formatDateNative(new Date())) : "";
+
+    var tipoInsumo = datos.Tipo_Insumo || datos.tipo_insumo || "";
+    var isProrrateoInsumo = (tipo === "gastosDesarrollo" || tipo === "desarrollo") && (tipoInsumo === "Fertilizantes" || tipoInsumo === "Pesticidas");
+
+    if (isProrrateoInsumo) {
+      var lotesActivos = obtenerListaLotesActivos(ss);
+      var numLotes = lotesActivos.length;
+      var propMonto = numLotes > 0 ? (total / numLotes) : total;
+      var propCantidad = numLotes > 0 ? (cantidad / numLotes) : cantidad;
+      var fechaGasto = datos.Fecha || datos.fecha || formatDateNative(new Date());
+      var detalleBase = datos.Detalle || datos.detalle || "";
+
+      var ciclosData = [];
+      var ciclosSheet = ss.getSheetByName(HOJA_CICLOS);
+      if (ciclosSheet && ciclosSheet.getLastRow() >= 2) {
+        ciclosData = leerTablaHoja(HOJA_CICLOS);
+      }
+
+      var headersInSheet = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+      lotesActivos.forEach(function(loteAct, idx) {
+        var activeCycle = ciclosData.find(function(c) {
+          var cLote = String(c.Lote || c.lote || c.Lote_Principal || '').trim();
+          return (cLote === loteAct || cLote.indexOf(loteAct + " ") === 0) && String(c.Estado || c.estado || '').toUpperCase() === 'EN PROCESO';
+        });
+
+        var loteTrackCode = "";
+        var loteGenCode = "";
+        var loteCultivo = "";
+
+        if (activeCycle) {
+          loteTrackCode = activeCycle.Codigo_Desarrollo || activeCycle.codigo_desarrollo || activeCycle.Codigo_Seguimiento || activeCycle.codigo_seguimiento || activeCycle.Codigo_General || activeCycle.codigo_general || "";
+          loteGenCode = activeCycle.Codigo_General || activeCycle.codigo_general || loteTrackCode;
+          loteCultivo = activeCycle.Cultivo || activeCycle.cultivo || "";
+        }
+
+        if (!loteTrackCode) {
+          loteTrackCode = generarCodigoSeguimiento(loteAct, tipoInsumo, fechaGasto);
+          loteGenCode = loteTrackCode;
+        }
+
+        var rowValues = [];
+        for (var c = 0; c < headersInSheet.length; c++) {
+          var h = headersInSheet[c].toString().trim();
+          var val = "";
+
+          if (h === "Lote_Principal") val = loteAct;
+          else if (h === "Sub_Lote" || h === "Division") val = "";
+          else if (h === "Lote" || h === "Lote_Completo") val = loteAct;
+          else if (h === "Tipo_Insumo") val = tipoInsumo;
+          else if (h === "Cantidad") val = propCantidad;
+          else if (h === "Unidad_Medida") val = datos.Unidad_Medida || datos.unidad_medida || "Unidades";
+          else if (h === "Costo_Unitario_COP" || h === "Precio_Unitario_COP") val = unitario;
+          else if (h === "Costo_Total_COP" || h === "Ingreso_Total_COP") val = propMonto;
+          else if (h === "Estado_Pago") val = estadoPago;
+          else if (h === "Cliente_Deudor_Proveedor") val = cliente;
+          else if (h === "Fecha_Vencimiento") val = fechaVenc;
+          else if (h === "Fecha_Pago_Realizado") val = fechaPagoReal;
+          else if (h === "Fecha") val = fechaGasto;
+          else if (h === "Detalle") val = (detalleBase ? detalleBase + " " : "") + "(Prorrateo general " + (idx + 1) + "/" + numLotes + " entre lotes activos)";
+          else if (h === "Codigo_Seguimiento") val = loteTrackCode;
+          else if (h === "Codigo_General") val = loteGenCode;
+
+          rowValues.push(val);
+        }
+
+        sheet.appendRow(rowValues);
+      });
+
+      return { success: true, prorrateado: true, numLotes: numLotes, totalDistribuido: total };
+    }
 
     var lotePrincipal = datos.Lote_Principal || datos.lote_principal || datos.Lote || datos.lote || "";
     var matchMain = lotePrincipal ? lotePrincipal.match(/^(Lote\s*\d+)/i) : null;

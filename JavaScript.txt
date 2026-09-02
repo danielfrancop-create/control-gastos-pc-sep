@@ -1560,6 +1560,65 @@
 
         let activePOSTab = 'gastos_iniciales';
 
+        function isProrrateoInsumoSelected() {
+            if (typeof activePOSTab === 'undefined' || activePOSTab !== 'gastos_desarrollo') return false;
+            const insumoEl = document.getElementById("posInsumo");
+            const val = insumoEl ? insumoEl.value : "";
+            return val === "Fertilizantes" || val === "Pesticidas";
+        }
+
+        function handlePOSInsumoChange() {
+            const isProrrateo = isProrrateoInsumoSelected();
+            const loteSelect = document.getElementById("posLotePrincipal");
+            const noticeEl = document.getElementById("posGeneralInsumosNotice");
+
+            if (loteSelect) {
+                if (isProrrateo) {
+                    loteSelect.disabled = true;
+                    loteSelect.classList.add("bg-slate-100", "text-slate-500", "cursor-not-allowed");
+                    loteSelect.removeAttribute("required");
+                } else {
+                    loteSelect.disabled = false;
+                    loteSelect.classList.remove("bg-slate-100", "text-slate-500", "cursor-not-allowed");
+                    loteSelect.setAttribute("required", "required");
+                }
+            }
+
+            if (noticeEl) {
+                if (isProrrateo) {
+                    noticeEl.classList.remove("hidden");
+                } else {
+                    noticeEl.classList.add("hidden");
+                }
+            }
+
+            checkPOSLoteSelection();
+        }
+
+        window.handlePOSInsumoChange = handlePOSInsumoChange;
+        window.handlePOSLotePrincipalChange = handlePOSLotePrincipalChange;
+        window.switchPOSTab = switchPOSTab;
+        window.checkPOSLoteSelection = checkPOSLoteSelection;
+
+        function getLocalActiveLotesList() {
+            const list = [];
+            if (rawData && rawData.ciclos) {
+                (rawData.ciclos || []).forEach(c => {
+                    const st = String(c.Estado || c.estado || '').toUpperCase();
+                    if (st === 'EN PROCESO' || st === 'ACTIVO') {
+                        const lp = String(c.Lote_Principal || c.lote_principal || c.Lote || c.lote || '').trim();
+                        const m = lp.match(/^(Lote\s*\d+)/i);
+                        const name = m ? m[1] : lp;
+                        if (name && !list.includes(name)) list.push(name);
+                    }
+                });
+            }
+            if (list.length === 0) {
+                for (let i = 1; i <= 16; i++) list.push(`Lote ${i}`);
+            }
+            return list;
+        }
+
         function switchPOSTab(tab) {
             activePOSTab = tab;
             const tabs = ['gastos_iniciales', 'gastos_desarrollo', 'ventas', 'ciclos_lot'];
@@ -1578,6 +1637,7 @@
                 }
             });
             hidePOSAlert();
+            handlePOSInsumoChange();
 
             // Render cycle tab content if active
             if (tab === 'ciclos_lot') {
@@ -1877,8 +1937,9 @@
             const banner = document.getElementById("posLoteRequiredBanner");
             const activeCycleBanner = document.getElementById("posActiveCycleAlertBanner");
             const tabs = ['gastos_iniciales', 'gastos_desarrollo', 'ventas', 'ciclos_lot'];
+            const isProrrateo = isProrrateoInsumoSelected();
 
-            if (!lote) {
+            if (!lote && !isProrrateo) {
                 if (contentWrapper) {
                     contentWrapper.classList.add("opacity-40", "pointer-events-none", "select-none");
                     const elements = contentWrapper.querySelectorAll("input, select, textarea, button");
@@ -1895,7 +1956,13 @@
                 if (contentWrapper) {
                     contentWrapper.classList.remove("opacity-40", "pointer-events-none", "select-none");
                     const elements = contentWrapper.querySelectorAll("input, select, textarea, button");
-                    elements.forEach(el => el.disabled = false);
+                    elements.forEach(el => {
+                        if (el.id === "posLotePrincipal" && isProrrateo) {
+                            el.disabled = true;
+                        } else {
+                            el.disabled = false;
+                        }
+                    });
                 }
                 if (banner) banner.classList.add("hidden");
 
@@ -2108,6 +2175,8 @@
                 const el = document.getElementById(id);
                 if (el && el.options && el.options.length > 0) el.selectedIndex = 0;
             });
+
+            handlePOSInsumoChange();
 
             // Reset radio buttons to PAGADO
             ["posEstadoPagoInicial", "posEstadoPagoDesarrollo", "posEstadoPagoVenta"].forEach(name => {
@@ -2414,6 +2483,7 @@
                 const unidad = document.getElementById("posUnidadMedidaDesarrollo").value || "Bultos";
                 const unitario = parseDecimal(document.getElementById("posCostoUnitarioDesarrollo").value);
                 const costo = parseDecimal(document.getElementById("posCostoDesarrollo").value) || (cantidad * unitario);
+                const isProrrateo = (insumo === "Fertilizantes" || insumo === "Pesticidas");
                 
                 const radios = document.getElementsByName("posEstadoPagoDesarrollo");
                 let estadoPago = "PAGADO";
@@ -2429,8 +2499,15 @@
                     return;
                 }
 
+                if (!isProrrateo && !lote) {
+                    showLoader(false);
+                    showPOSAlert("Por favor, selecciona un Lote Destino para este gasto.", "error");
+                    return;
+                }
+
                 const record = {
-                    Lote: lote,
+                    Lote_Principal: isProrrateo ? "General" : lote,
+                    Lote: isProrrateo ? "General" : lote,
                     Tipo_Insumo: insumo,
                     Cantidad: cantidad,
                     Unidad_Medida: unidad,
@@ -2445,10 +2522,31 @@
                     Codigo_Seguimiento: trackingCode
                 };
 
+                const updateLocalProrrateoRecords = () => {
+                    if (!rawData.gastosDesarrollo) rawData.gastosDesarrollo = [];
+                    if (isProrrateo) {
+                        const activeLotes = getLocalActiveLotesList();
+                        const count = activeLotes.length;
+                        const propCosto = count > 0 ? (costo / count) : costo;
+                        const propCantidad = count > 0 ? (cantidad / count) : cantidad;
+                        activeLotes.forEach(l => {
+                            const recCopy = Object.assign({}, record, {
+                                Lote_Principal: l,
+                                Lote: l,
+                                Cantidad: propCantidad,
+                                Costo_Total_COP: propCosto,
+                                Detalle: (detalle ? detalle + " " : "") + `(Prorrateo general entre ${count} lotes activos)`
+                            });
+                            rawData.gastosDesarrollo.push(recCopy);
+                        });
+                    } else {
+                        rawData.gastosDesarrollo.push(record);
+                    }
+                };
+
                 if (!navigator.onLine) {
                     saveOfflineRecord("gastosDesarrollo", record).then(() => {
-                        if (!rawData.gastosDesarrollo) rawData.gastosDesarrollo = [];
-                        (rawData.gastosDesarrollo || []).push(record);
+                        updateLocalProrrateoRecords();
                         applyFilters();
                         showLoader(false);
                         clearPOSForm();
@@ -2459,8 +2557,7 @@
 
                 if (typeof google === 'undefined' || !google.script || !google.script.run) {
                     setTimeout(() => {
-                        if (!rawData.gastosDesarrollo) rawData.gastosDesarrollo = [];
-                        (rawData.gastosDesarrollo || []).push(record);
+                        updateLocalProrrateoRecords();
                         applyFilters();
                         showLoader(false);
                         clearPOSForm();
@@ -2471,11 +2568,14 @@
                         .withSuccessHandler(function(response) {
                             showLoader(false);
                             if (response && response.success) {
-                                if (!rawData.gastosDesarrollo) rawData.gastosDesarrollo = [];
-                                (rawData.gastosDesarrollo || []).push(record);
-                                applyFilters();
+                                if (typeof fetchAllData === 'function') {
+                                    fetchAllData();
+                                } else {
+                                    updateLocalProrrateoRecords();
+                                    applyFilters();
+                                }
                                 clearPOSForm();
-                                alert("¡Información registrada con éxito!");
+                                alert(isProrrateo ? `¡Gasto prorrateado exitosamente entre ${response.numLotes || 'los'} lotes activos!` : "¡Información registrada con éxito!");
                             } else {
                                 showPOSAlert(response ? response.error : "Error de respuesta.", "error");
                             }
@@ -2483,8 +2583,7 @@
                         .withFailureHandler(function(err) {
                             showLoader(false);
                             saveOfflineRecord("gastosDesarrollo", record).then(() => {
-                                if (!rawData.gastosDesarrollo) rawData.gastosDesarrollo = [];
-                                (rawData.gastosDesarrollo || []).push(record);
+                                updateLocalProrrateoRecords();
                                 applyFilters();
                                 clearPOSForm();
                                 alert("¡Información registrada con éxito!");
