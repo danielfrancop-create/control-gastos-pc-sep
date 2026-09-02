@@ -1,0 +1,351 @@
+/**
+ * Finca Los Sauces - Control de Acceso y Roles de Usuario (Auth.gs)
+ */
+
+var HOJA_USUARIOS = "Usuarios";
+
+/**
+ * Función que verifica la existencia de la hoja Usuarios y determina el rol del usuario activo.
+ * @param {string} [providedEmail] Correo opcional enviado desde la vista para verificación
+ * @return {Object} Objeto JSON con success, registered, active, email y role ("admin" o "view")
+ */
+function getCurrentUserRole(providedEmail) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      return {
+        success: false,
+        registered: false,
+        active: false,
+        email: "",
+        role: "view",
+        error: "No se pudo obtener la hoja de cálculo activa."
+      };
+    }
+
+    var sheet = ss.getSheetByName(HOJA_USUARIOS);
+    var headersNeeded = ["ID", "Email", "Nombre", "Rol", "Estado"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_USUARIOS);
+      sheet.appendRow(headersNeeded);
+    } else if (typeof asegurarColumnas === "function") {
+      asegurarColumnas(sheet, headersNeeded);
+    }
+
+    var userEmail = "";
+
+    if (providedEmail && typeof providedEmail === "string") {
+      userEmail = providedEmail.trim().toLowerCase();
+    }
+
+    if (!userEmail) {
+      try {
+        if (typeof Session !== "undefined" && Session.getActiveUser) {
+          userEmail = Session.getActiveUser().getEmail();
+        }
+      } catch (e) {
+        userEmail = "";
+      }
+
+      if (!userEmail) {
+        try {
+          if (typeof Session !== "undefined" && Session.getEffectiveUser) {
+            userEmail = Session.getEffectiveUser().getEmail();
+          }
+        } catch (e) {
+          userEmail = "";
+        }
+      }
+    }
+
+    var effectiveEmail = "";
+    try {
+      if (typeof Session !== "undefined" && Session.getEffectiveUser) {
+        effectiveEmail = Session.getEffectiveUser().getEmail();
+      }
+    } catch (e) {
+      effectiveEmail = "";
+    }
+
+    userEmail = userEmail ? userEmail.trim().toLowerCase() : "";
+    effectiveEmail = effectiveEmail ? effectiveEmail.trim().toLowerCase() : "";
+
+    var lastRow = sheet.getLastRow();
+
+    // Si la hoja Usuarios no tiene registros de usuarios
+    if (lastRow < 2) {
+      var adminEmail = userEmail || effectiveEmail || "admin@fincasauces.com";
+      sheet.appendRow(["USR-001", adminEmail, adminEmail.split('@')[0], "admin", "ACTIVO"]);
+      return {
+        success: true,
+        registered: true,
+        active: true,
+        email: adminEmail,
+        role: "admin"
+      };
+    }
+
+    var lastCol = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var emailColIdx = 1;
+    var roleColIdx = 3;
+    var statusColIdx = 4;
+
+    for (var c = 0; c < headers.length; c++) {
+      var h = headers[c].toString().trim().toLowerCase();
+      if (h === "email" || h === "correo") emailColIdx = c;
+      if (h === "rol" || h === "role") roleColIdx = c;
+      if (h === "estado" || h === "status") statusColIdx = c;
+    }
+
+    function findInSheet(target) {
+      if (!target) return null;
+      for (var r = 0; r < values.length; r++) {
+        var row = values[r];
+        var rowEmail = row[emailColIdx] ? row[emailColIdx].toString().trim().toLowerCase() : "";
+        if (rowEmail === target) {
+          var role = row[roleColIdx] ? row[roleColIdx].toString().trim().toLowerCase() : "view";
+          var status = row[statusColIdx] ? row[statusColIdx].toString().trim().toUpperCase() : "INACTIVO";
+          return {
+            email: rowEmail,
+            role: (role === "admin") ? "admin" : "view",
+            status: status
+          };
+        }
+      }
+      return null;
+    }
+
+    var foundUser = null;
+
+    if (userEmail) {
+      foundUser = findInSheet(userEmail);
+    }
+
+    // Si no se detectó un correo activo ni se proporcionó un correo válido, devolver no registrado
+    if (!userEmail) {
+      // Registrar al propietario solo si la hoja no tiene ningún usuario registrado aún
+      if (lastRow < 2 && effectiveEmail) {
+        var nextId = "USR-" + String(lastRow).padStart(3, '0');
+        sheet.appendRow([nextId, effectiveEmail, effectiveEmail.split('@')[0], "admin", "ACTIVO"]);
+        return {
+          success: true,
+          registered: true,
+          active: true,
+          email: effectiveEmail,
+          role: "admin"
+        };
+      }
+
+      return {
+        success: true,
+        registered: false,
+        active: false,
+        email: "",
+        role: "view"
+      };
+    }
+
+    if (!foundUser) {
+      return {
+        success: true,
+        registered: false,
+        active: false,
+        email: userEmail || effectiveEmail || "",
+        role: "view"
+      };
+    }
+
+    var isActive = (foundUser.status === "ACTIVO" || foundUser.status === "ACTIVE");
+
+    return {
+      success: true,
+      registered: true,
+      active: isActive,
+      email: foundUser.email,
+      role: foundUser.role
+    };
+
+  } catch (err) {
+    return {
+      success: false,
+      registered: false,
+      active: false,
+      email: "",
+      role: "view",
+      error: err.toString()
+    };
+  }
+}
+
+/**
+ * Obtiene la lista completa de usuarios registrados en la hoja Usuarios.
+ * @return {Object} Objeto JSON con success y la lista de usuarios.
+ */
+function obtenerListaUsuarios() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { success: false, error: "No se pudo obtener la hoja de cálculo activa." };
+
+    var sheet = ss.getSheetByName(HOJA_USUARIOS);
+    if (!sheet) return { success: true, data: [] };
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { success: true, data: [] };
+
+    var lastCol = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var result = [];
+    for (var r = 0; r < values.length; r++) {
+      var row = values[r];
+      var userObj = {};
+      var hasData = false;
+
+      for (var c = 0; c < headers.length; c++) {
+        var h = headers[c].toString().trim();
+        var val = row[c] !== undefined && row[c] !== null ? row[c].toString().trim() : "";
+        if (val) hasData = true;
+        userObj[h] = val;
+      }
+
+      if (hasData) {
+        result.push({
+          id: userObj.ID || ("USR-" + String(r + 1).padStart(3, '0')),
+          email: (userObj.Email || userObj.Correo || "").toLowerCase(),
+          nombre: userObj.Nombre || (userObj.Email ? userObj.Email.split('@')[0] : ""),
+          rol: (userObj.Rol || userObj.Role || "view").toLowerCase() === "admin" ? "admin" : "view",
+          estado: (userObj.Estado || userObj.Status || "ACTIVO").toUpperCase()
+        });
+      }
+    }
+
+    return { success: true, data: result };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+/**
+ * Agrega o actualiza un usuario en la hoja Usuarios.
+ * @param {Object} datos - Objeto con email, nombre, rol ("admin" o "view") y estado ("ACTIVO" o "INACTIVO")
+ * @return {Object} Objeto JSON con el resultado de la operación.
+ */
+function guardarUsuario(datos) {
+  try {
+    var email = datos.email || datos.Email || "";
+    var nombre = datos.nombre || datos.Nombre || (email ? email.split('@')[0] : "");
+    var rol = (datos.rol || datos.Rol || "view").toLowerCase() === "admin" ? "admin" : "view";
+    var estado = (datos.estado || datos.Estado || "ACTIVO").toUpperCase();
+
+    email = email.trim().toLowerCase();
+    if (!email) return { success: false, error: "El correo electrónico es obligatorio." };
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { success: false, error: "No se encontró la hoja de cálculo." };
+
+    var sheet = ss.getSheetByName(HOJA_USUARIOS);
+    var headersNeeded = ["ID", "Email", "Nombre", "Rol", "Estado"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_USUARIOS);
+      sheet.appendRow(headersNeeded);
+    } else if (typeof asegurarColumnas === "function") {
+      asegurarColumnas(sheet, headersNeeded);
+    }
+
+    var lastRow = sheet.getLastRow();
+    var emailRowIdx = -1;
+
+    if (lastRow >= 2) {
+      var lastCol = sheet.getLastColumn();
+      var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+      var emailColIdx = -1;
+      for (var c = 0; c < headers.length; c++) {
+        var h = headers[c].toString().trim().toLowerCase();
+        if (h === "email" || h === "correo") {
+          emailColIdx = c;
+          break;
+        }
+      }
+      if (emailColIdx === -1) emailColIdx = 1;
+
+      for (var r = 0; r < values.length; r++) {
+        var rowEmail = values[r][emailColIdx] ? values[r][emailColIdx].toString().trim().toLowerCase() : "";
+        if (rowEmail === email) {
+          emailRowIdx = r + 2;
+          break;
+        }
+      }
+    }
+
+    if (emailRowIdx !== -1) {
+      // Actualizar usuario existente
+      sheet.getRange(emailRowIdx, 3).setValue(nombre);
+      sheet.getRange(emailRowIdx, 4).setValue(rol);
+      sheet.getRange(emailRowIdx, 5).setValue(estado);
+      return { success: true, message: "Usuario " + email + " actualizado correctamente." };
+    } else {
+      // Insertar nuevo usuario
+      var nextNum = lastRow < 2 ? 1 : (lastRow);
+      var idUsr = "USR-" + String(nextNum).padStart(3, '0');
+      sheet.appendRow([idUsr, email, nombre, rol, estado]);
+      return { success: true, message: "Usuario " + email + " registrado con éxito." };
+    }
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+/**
+ * Elimina un usuario de la hoja Usuarios por correo electrónico.
+ * @param {string} email - Correo del usuario a eliminar.
+ * @return {Object} Objeto JSON con el resultado.
+ */
+function eliminarUsuario(email) {
+  try {
+    var targetEmail = String(email || "").trim().toLowerCase();
+    if (!targetEmail) return { success: false, error: "Especifica un correo válido." };
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return { success: false, error: "No existe la hoja de cálculo." };
+
+    var sheet = ss.getSheetByName(HOJA_USUARIOS);
+    if (!sheet) return { success: false, error: "La hoja Usuarios no existe." };
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { success: false, error: "No hay usuarios registrados." };
+
+    var lastCol = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var emailColIdx = -1;
+    for (var c = 0; c < headers.length; c++) {
+      var h = headers[c].toString().trim().toLowerCase();
+      if (h === "email" || h === "correo") {
+        emailColIdx = c;
+        break;
+      }
+    }
+    if (emailColIdx === -1) emailColIdx = 1;
+
+    for (var r = 0; r < values.length; r++) {
+      var rowEmail = values[r][emailColIdx] ? values[r][emailColIdx].toString().trim().toLowerCase() : "";
+      if (rowEmail === targetEmail) {
+        sheet.deleteRow(r + 2);
+        return { success: true, message: "Usuario " + targetEmail + " eliminado correctamente." };
+      }
+    }
+
+    return { success: false, error: "No se encontró el usuario con correo " + targetEmail };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
