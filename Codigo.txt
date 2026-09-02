@@ -11,6 +11,9 @@ var HOJA_PRESTAMOS = "prestamos";
 var HOJA_CICLOS = "ciclos";
 var HOJA_GASTOS_PERSONALES = "gastosPersonales";
 var HOJA_FOTOS_LOTES = "fotosLotes";
+var HOJA_INGRESOS_EXTERNOS = "ingresosExternos";
+var HOJA_METAS_RECOLECCION = "metasRecoleccion";
+var HOJA_APORTES_METAS = "aportesMetas";
 
 function doGet() {
   return HtmlService.createTemplateFromFile("index")
@@ -122,10 +125,103 @@ function getDashboardData() {
       prestamos: getSheetData(ss, HOJA_PRESTAMOS),
       ciclos: getSheetData(ss, HOJA_CICLOS),
       gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES),
-      fotosLotes: getSheetData(ss, HOJA_FOTOS_LOTES)
+      fotosLotes: getSheetData(ss, HOJA_FOTOS_LOTES),
+      ingresosExternos: getSheetData(ss, HOJA_INGRESOS_EXTERNOS),
+      metasRecoleccion: getSheetData(ss, HOJA_METAS_RECOLECCION),
+      aportesMetas: getSheetData(ss, HOJA_APORTES_METAS)
     };
 
     return { success: true, data: data };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+/**
+ * Funciones independientes para Gestión de Ingresos Externos y Metas de Recolección
+ */
+function registrarIngresoExterno(datos) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(HOJA_INGRESOS_EXTERNOS);
+    var columnsNeeded = ["ID_Ingreso_Externo", "Fecha", "Fuente_Origen", "Monto_COP", "Metodo_Pago", "Notas"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_INGRESOS_EXTERNOS);
+      sheet.appendRow(columnsNeeded);
+    }
+    asegurarColumnas(sheet, columnsNeeded);
+
+    var lastRow = sheet.getLastRow();
+    var nextId = "IE-" + String(lastRow < 2 ? 1 : lastRow).padStart(3, '0');
+
+    var fecha = datos.Fecha || datos.fecha || formatDateNative(new Date());
+    var fuente = datos.Fuente_Origen || datos.fuente_origen || datos.Fuente || datos.fuente || "Trabajo Externo";
+    var monto = Number(datos.Monto_COP || datos.monto_cop || datos.Monto || datos.monto) || 0;
+    var metodo = datos.Metodo_Pago || datos.metodo_pago || "Transferencia";
+    var notas = datos.Notas || datos.notas || "";
+
+    sheet.appendRow([nextId, fecha, fuente, monto, metodo, notas]);
+    return { success: true, idGenerado: nextId, message: "Ingreso externo registrado correctamente." };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function crearMetaRecoleccion(datos) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(HOJA_METAS_RECOLECCION);
+    var columnsNeeded = ["ID_Meta", "Nombre_Meta", "Monto_Objetivo_COP", "Fecha_Creacion", "Fecha_Limite", "Categoria", "Estado", "Notas"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_METAS_RECOLECCION);
+      sheet.appendRow(columnsNeeded);
+    }
+    asegurarColumnas(sheet, columnsNeeded);
+
+    var lastRow = sheet.getLastRow();
+    var nextId = "META-" + String(lastRow < 2 ? 1 : lastRow).padStart(3, '0');
+
+    var nombre = datos.Nombre_Meta || datos.nombre_meta || datos.Nombre || datos.nombre || "Meta Ahorro";
+    var montoObj = Number(datos.Monto_Objetivo_COP || datos.monto_objetivo_cop || datos.Monto_Objetivo || datos.monto_objetivo) || 0;
+    var fechaCreacion = datos.Fecha_Creacion || datos.fecha_creacion || formatDateNative(new Date());
+    var fechaLimite = datos.Fecha_Limite || datos.fecha_limite || "";
+    var categoria = datos.Categoria || datos.categoria || "Otros";
+    var estado = datos.Estado || datos.estado || "EN PROCESO";
+    var notas = datos.Notas || datos.notas || "";
+
+    sheet.appendRow([nextId, nombre, montoObj, fechaCreacion, fechaLimite, categoria, estado, notas]);
+    return { success: true, idGenerado: nextId, message: "Meta de recolección creada correctamente." };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function aportarAMetaRecoleccion(datos) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(HOJA_APORTES_METAS);
+    var columnsNeeded = ["ID_Aporte", "ID_Meta", "Nombre_Meta", "Fecha", "Monto_Aporte_COP", "Origen_Fondos", "Notas"];
+
+    if (!sheet) {
+      sheet = ss.insertSheet(HOJA_APORTES_METAS);
+      sheet.appendRow(columnsNeeded);
+    }
+    asegurarColumnas(sheet, columnsNeeded);
+
+    var lastRow = sheet.getLastRow();
+    var nextId = "APORTE-" + String(lastRow < 2 ? 1 : lastRow).padStart(3, '0');
+
+    var idMeta = datos.ID_Meta || datos.id_meta || "";
+    var nombreMeta = datos.Nombre_Meta || datos.nombre_meta || "";
+    var fecha = datos.Fecha || datos.fecha || formatDateNative(new Date());
+    var monto = Number(datos.Monto_Aporte_COP || datos.monto_aporte_cop || datos.Monto || datos.monto) || 0;
+    var origen = datos.Origen_Fondos || datos.origen_fondos || "Ingreso Externo";
+    var notas = datos.Notas || datos.notas || "";
+
+    sheet.appendRow([nextId, idMeta, nombreMeta, fecha, monto, origen, notas]);
+    return { success: true, idGenerado: nextId, message: "Aporte registrado correctamente." };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
@@ -201,8 +297,34 @@ function guardarFotoLote(datos) {
     var urlDrive = datos.Url_Foto_Drive || datos.url_foto_drive || "";
     var base64Data = datos.Base64_Data || datos.base64_data || "";
 
+    // Upload to Google Drive if base64 file data is present
+    if (base64Data && typeof DriveApp !== 'undefined') {
+      try {
+        var folderName = "Finca Los Sauces - Fotos Lotes";
+        var folders = DriveApp.getFoldersByName(folderName);
+        var targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+
+        var mimeType = "image/jpeg";
+        var base64Clean = base64Data;
+        if (base64Data.indexOf("data:") === 0) {
+          var parts = base64Data.split(",");
+          base64Clean = parts[1];
+          var mimeMatch = parts[0].match(/data:(.*?);/);
+          if (mimeMatch && mimeMatch[1]) mimeType = mimeMatch[1];
+        }
+
+        var bytes = Utilities.base64Decode(base64Clean);
+        var blob = Utilities.newBlob(bytes, mimeType, idFoto + "_" + lote.replace(/\s+/g, "") + ".jpg");
+        var driveFile = targetFolder.createFile(blob);
+        driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        urlDrive = driveFile.getUrl();
+      } catch (driveErr) {
+        Logger.log("Error subiendo foto a Drive: " + driveErr.toString());
+      }
+    }
+
     sheet.appendRow([idFoto, lote, fecha, titulo, descripcion, urlDrive, base64Data]);
-    return { success: true, idFoto: idFoto, message: "Fotografía guardada con éxito." };
+    return { success: true, idFoto: idFoto, urlDrive: urlDrive, message: "Fotografía guardada con éxito." };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
@@ -493,6 +615,36 @@ function getConsolidatedData(fechaInicio, fechaFin, lote, cultivo) {
   return obtenerDatosConsolidados({ fechaInicio: fechaInicio, fechaFin: fechaFin, lote: lote, cultivo: cultivo });
 }
 
+function obtenerListaLotesActivos(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  var list = [];
+  var ciclosSheet = ss.getSheetByName(HOJA_CICLOS);
+
+  if (ciclosSheet && ciclosSheet.getLastRow() >= 2) {
+    var ciclosData = leerTablaHoja(HOJA_CICLOS);
+    ciclosData.forEach(function(c) {
+      var estado = String(c.Estado || c.estado || '').toUpperCase();
+      if (estado === 'EN PROCESO' || estado === 'ACTIVO') {
+        var lp = String(c.Lote_Principal || c.lote_principal || c.Lote || c.lote || '').trim();
+        var match = lp.match(/^(Lote\s*\d+)/i);
+        var loteName = match ? match[1] : lp;
+        if (loteName && list.indexOf(loteName) === -1) {
+          list.push(loteName);
+        }
+      }
+    });
+  }
+
+  // Fallback if no active cycles registered: default to all 16 lotes
+  if (list.length === 0) {
+    for (var i = 1; i <= 16; i++) {
+      list.push("Lote " + i);
+    }
+  }
+
+  return list;
+}
+
 function guardarRegistro(tipo, datos) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -533,6 +685,77 @@ function guardarRegistro(tipo, datos) {
     var cliente = datos.Cliente_Deudor_Proveedor || datos.cliente_deudor_proveedor || datos.Comprador || datos.comprador || "";
     var fechaVenc = datos.Fecha_Vencimiento || datos.fecha_vencimiento || "";
     var fechaPagoReal = estadoPago === "PAGADO" ? (datos.Fecha_Pago_Realizado || datos.fecha_pago_realizado || datos.Fecha || datos.fecha || formatDateNative(new Date())) : "";
+
+    var tipoInsumo = datos.Tipo_Insumo || datos.tipo_insumo || "";
+    var isProrrateoInsumo = (tipo === "gastosDesarrollo" || tipo === "desarrollo") && (tipoInsumo === "Fertilizantes" || tipoInsumo === "Pesticidas");
+
+    if (isProrrateoInsumo) {
+      var lotesActivos = obtenerListaLotesActivos(ss);
+      var numLotes = lotesActivos.length;
+      var propMonto = numLotes > 0 ? (total / numLotes) : total;
+      var propCantidad = numLotes > 0 ? (cantidad / numLotes) : cantidad;
+      var fechaGasto = datos.Fecha || datos.fecha || formatDateNative(new Date());
+      var detalleBase = datos.Detalle || datos.detalle || "";
+
+      var ciclosData = [];
+      var ciclosSheet = ss.getSheetByName(HOJA_CICLOS);
+      if (ciclosSheet && ciclosSheet.getLastRow() >= 2) {
+        ciclosData = leerTablaHoja(HOJA_CICLOS);
+      }
+
+      var headersInSheet = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+      lotesActivos.forEach(function(loteAct, idx) {
+        var activeCycle = ciclosData.find(function(c) {
+          var cLote = String(c.Lote || c.lote || c.Lote_Principal || '').trim();
+          return (cLote === loteAct || cLote.indexOf(loteAct + " ") === 0) && String(c.Estado || c.estado || '').toUpperCase() === 'EN PROCESO';
+        });
+
+        var loteTrackCode = "";
+        var loteGenCode = "";
+        var loteCultivo = "";
+
+        if (activeCycle) {
+          loteTrackCode = activeCycle.Codigo_Desarrollo || activeCycle.codigo_desarrollo || activeCycle.Codigo_Seguimiento || activeCycle.codigo_seguimiento || activeCycle.Codigo_General || activeCycle.codigo_general || "";
+          loteGenCode = activeCycle.Codigo_General || activeCycle.codigo_general || loteTrackCode;
+          loteCultivo = activeCycle.Cultivo || activeCycle.cultivo || "";
+        }
+
+        if (!loteTrackCode) {
+          loteTrackCode = generarCodigoSeguimiento(loteAct, tipoInsumo, fechaGasto);
+          loteGenCode = loteTrackCode;
+        }
+
+        var rowValues = [];
+        for (var c = 0; c < headersInSheet.length; c++) {
+          var h = headersInSheet[c].toString().trim();
+          var val = "";
+
+          if (h === "Lote_Principal") val = loteAct;
+          else if (h === "Sub_Lote" || h === "Division") val = "";
+          else if (h === "Lote" || h === "Lote_Completo") val = loteAct;
+          else if (h === "Tipo_Insumo") val = tipoInsumo;
+          else if (h === "Cantidad") val = propCantidad;
+          else if (h === "Unidad_Medida") val = datos.Unidad_Medida || datos.unidad_medida || "Unidades";
+          else if (h === "Costo_Unitario_COP" || h === "Precio_Unitario_COP") val = unitario;
+          else if (h === "Costo_Total_COP" || h === "Ingreso_Total_COP") val = propMonto;
+          else if (h === "Estado_Pago") val = estadoPago;
+          else if (h === "Cliente_Deudor_Proveedor") val = cliente;
+          else if (h === "Fecha_Vencimiento") val = fechaVenc;
+          else if (h === "Fecha_Pago_Realizado") val = fechaPagoReal;
+          else if (h === "Fecha") val = fechaGasto;
+          else if (h === "Detalle") val = (detalleBase ? detalleBase + " " : "") + "(Prorrateo general " + (idx + 1) + "/" + numLotes + " entre lotes activos)";
+          else if (h === "Codigo_Seguimiento") val = loteTrackCode;
+          else if (h === "Codigo_General") val = loteGenCode;
+
+          rowValues.push(val);
+        }
+
+        sheet.appendRow(rowValues);
+      });
+
+      return { success: true, prorrateado: true, numLotes: numLotes, totalDistribuido: total };
+    }
 
     var lotePrincipal = datos.Lote_Principal || datos.lote_principal || datos.Lote || datos.lote || "";
     var matchMain = lotePrincipal ? lotePrincipal.match(/^(Lote\s*\d+)/i) : null;
@@ -1009,7 +1232,8 @@ function obtenerBalanceCajaGeneral(filtros) {
       gastosIniciales: getSheetData(ss, HOJA_GASTOS_INICIALES),
       gastosDesarrollo: getSheetData(ss, HOJA_GASTOS_DESARROLLO),
       ventas: getSheetData(ss, HOJA_VENTAS),
-      gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES)
+      gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES),
+      ingresosExternos: getSheetData(ss, HOJA_INGRESOS_EXTERNOS)
     };
 
     var fechaInicio = filtros ? filtros.fechaInicio : null;
@@ -1032,16 +1256,21 @@ function obtenerBalanceCajaGeneral(filtros) {
 
     var cajaRealAgricola = ventasCobradas - gastosAgricolasPagados;
 
+    var ingresosExternosTotales = data.ingresosExternos
+      .filter(function(x) { return isDateOk(x.Fecha || x.fecha); })
+      .reduce(function(sum, x) { return sum + (Number(x.Monto_COP || x.monto_cop || x.Monto || x.monto) || 0); }, 0);
+
     var gastosPersonalesTotales = data.gastosPersonales
       .filter(function(x) { return isDateOk(x.Fecha || x.fecha); })
       .reduce(function(sum, x) { return sum + (Number(x.Monto_COP || x.monto_cop) || 0); }, 0);
 
-    var saldoLiquidoDisponible = cajaRealAgricola - gastosPersonalesTotales;
+    var saldoLiquidoDisponible = (cajaRealAgricola + ingresosExternosTotales) - gastosPersonalesTotales;
 
     return {
       success: true,
       metrics: {
         cajaRealAgricola: cajaRealAgricola,
+        ingresosExternosTotales: ingresosExternosTotales,
         gastosPersonalesTotales: gastosPersonalesTotales,
         saldoLiquidoDisponible: saldoLiquidoDisponible,
         ventasCobradas: ventasCobradas,
@@ -1209,6 +1438,9 @@ function eliminarRegistroSeguro(tipoTabla, idRegistro, codigoSeguridad) {
     else if (tipoTabla === "ventas" || tipoTabla === "venta") sheetName = HOJA_VENTAS;
     else if (tipoTabla === "gastosPersonales" || tipoTabla === "personal") sheetName = HOJA_GASTOS_PERSONALES;
     else if (tipoTabla === "fotosLotes" || tipoTabla === "foto") sheetName = HOJA_FOTOS_LOTES;
+    else if (tipoTabla === "ingresosExternos" || tipoTabla === "ingresoExterno") sheetName = HOJA_INGRESOS_EXTERNOS;
+    else if (tipoTabla === "metasRecoleccion" || tipoTabla === "metaRecoleccion") sheetName = HOJA_METAS_RECOLECCION;
+    else if (tipoTabla === "aportesMetas" || tipoTabla === "aporteMeta") sheetName = HOJA_APORTES_METAS;
     else return { success: false, message: "Tipo de tabla no válido." };
 
     var sheet = ss.getSheetByName(sheetName);
@@ -1223,7 +1455,7 @@ function eliminarRegistroSeguro(tipoTabla, idRegistro, codigoSeguridad) {
     var codeColIdx = -1;
     for (var c = 0; c < headers.length; c++) {
       var h = headers[c].toString().trim();
-      if (h === "Codigo_Seguimiento" || h === "Codigo_General" || h === "ID_Gasto_Personal" || h === "ID_Foto") {
+      if (h === "Codigo_Seguimiento" || h === "Codigo_General" || h === "ID_Gasto_Personal" || h === "ID_Foto" || h === "ID_Ingreso_Externo" || h === "ID_Meta" || h === "ID_Aporte") {
         codeColIdx = c + 1;
         break;
       }
