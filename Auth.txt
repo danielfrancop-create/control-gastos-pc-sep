@@ -33,49 +33,33 @@ function getCurrentUserRole(providedEmail) {
       asegurarColumnas(sheet, headersNeeded);
     }
 
-    var userEmail = "";
-
-    if (providedEmail && typeof providedEmail === "string") {
-      userEmail = providedEmail.trim().toLowerCase();
-    }
-
-    if (!userEmail) {
-      try {
-        if (typeof Session !== "undefined" && Session.getActiveUser) {
-          userEmail = Session.getActiveUser().getEmail();
-        }
-      } catch (e) {
-        userEmail = "";
+    var activeEmail = "";
+    try {
+      if (typeof Session !== "undefined" && Session.getActiveUser) {
+        activeEmail = Session.getActiveUser().getEmail();
       }
-
-      if (!userEmail) {
-        try {
-          if (typeof Session !== "undefined" && Session.getEffectiveUser) {
-            userEmail = Session.getEffectiveUser().getEmail();
-          }
-        } catch (e) {
-          userEmail = "";
-        }
-      }
-    }
+    } catch (e) { activeEmail = ""; }
 
     var effectiveEmail = "";
     try {
       if (typeof Session !== "undefined" && Session.getEffectiveUser) {
         effectiveEmail = Session.getEffectiveUser().getEmail();
       }
-    } catch (e) {
-      effectiveEmail = "";
-    }
+    } catch (e) { effectiveEmail = ""; }
 
-    userEmail = userEmail ? userEmail.trim().toLowerCase() : "";
-    effectiveEmail = effectiveEmail ? effectiveEmail.trim().toLowerCase() : "";
+    var userEmail = "";
+    if (providedEmail && typeof providedEmail === "string" && providedEmail.trim()) {
+      userEmail = providedEmail.trim().toLowerCase();
+    } else {
+      userEmail = activeEmail ? activeEmail.trim().toLowerCase() : (effectiveEmail ? effectiveEmail.trim().toLowerCase() : "");
+    }
 
     var lastRow = sheet.getLastRow();
 
     // Si la hoja Usuarios no tiene registros de usuarios
     if (lastRow < 2) {
-      var adminEmail = userEmail || effectiveEmail || "admin@fincasauces.com";
+      var adminEmail = userEmail || activeEmail || effectiveEmail || "admin@fincasauces.com";
+      adminEmail = adminEmail.trim().toLowerCase();
       sheet.appendRow(["USR-001", adminEmail, adminEmail.split('@')[0], "admin", "ACTIVO"]);
       return {
         success: true,
@@ -179,6 +163,27 @@ function getCurrentUserRole(providedEmail) {
       error: err.toString()
     };
   }
+}
+
+/**
+ * Helper estricto de validación backend.
+ * Retorna { autorizado: true, email: string, role: string } si la cuenta está registrada y activa en Usuarios.
+ */
+function verificarAccesoUsuario(emailOpcional) {
+  var roleInfo = getCurrentUserRole(emailOpcional);
+  if (roleInfo && roleInfo.registered && roleInfo.active) {
+    return {
+      autorizado: true,
+      email: roleInfo.email,
+      role: roleInfo.role
+    };
+  }
+  return {
+    autorizado: false,
+    email: roleInfo ? roleInfo.email : "",
+    role: "denied",
+    error: "Acceso No Autorizado: La cuenta no se encuentra registrada o activa en el sistema."
+  };
 }
 
 /**
