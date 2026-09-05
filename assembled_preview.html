@@ -4249,10 +4249,6 @@
         window.showView = showView;
 
         function showView(viewName) {
-            if (currentUserRole === 'view' && (viewName === 'data_entry' || viewName === 'obligaciones' || viewName === 'caja_general')) {
-                alert("Tu usuario solo tiene permisos de LECTURA (Ver Solo). No puedes acceder a este módulo.");
-                return;
-            }
             currentView = viewName;
 
             // Auto close mobile drawer when selecting any view
@@ -8643,13 +8639,19 @@
                 return;
             }
 
+            const isPermitted = function(val) {
+                if (val === undefined || val === null || val === "") return true; // Default to allowed for registered active users if unconfigured
+                const s = String(val).trim().toLowerCase();
+                return s === "sí" || s === "si" || s === "true" || s === "1" || s === "activo";
+            };
+
             // Ocultar / Mostrar menús y botones según los permisos específicos por módulo
-            const modDashboard = (perms.Modulo_Dashboard || perms.Modulo_Inicio) === "Sí" || (perms.Modulo_Dashboard || perms.Modulo_Inicio) === "Si";
-            const modPOS = (perms.Modulo_POS || perms.Modulo_Gastos) === "Sí" || (perms.Modulo_POS || perms.Modulo_Gastos) === "Si";
-            const modEstadoResultados = (perms.Modulo_EstadoResultados || perms.Modulo_Finanzas) === "Sí" || (perms.Modulo_EstadoResultados || perms.Modulo_Finanzas) === "Si";
-            const modObligaciones = (perms.Modulo_Obligaciones || perms.Modulo_Finanzas) === "Sí" || (perms.Modulo_Obligaciones || perms.Modulo_Finanzas) === "Si";
-            const modMapaLotes = (perms.Modulo_MapaLotes || perms.Modulo_Lotes) === "Sí" || (perms.Modulo_MapaLotes || perms.Modulo_Lotes) === "Si";
-            const modCajaGeneral = (perms.Modulo_CajaGeneral || perms.Modulo_Finanzas) === "Sí" || (perms.Modulo_CajaGeneral || perms.Modulo_Finanzas) === "Si";
+            const modDashboard = isPermitted(perms.Modulo_Dashboard || perms.Modulo_Inicio);
+            const modPOS = isPermitted(perms.Modulo_POS || perms.Modulo_Gastos);
+            const modEstadoResultados = isPermitted(perms.Modulo_EstadoResultados || perms.Modulo_Finanzas);
+            const modObligaciones = isPermitted(perms.Modulo_Obligaciones || perms.Modulo_Finanzas);
+            const modMapaLotes = isPermitted(perms.Modulo_MapaLotes || perms.Modulo_Lotes);
+            const modCajaGeneral = isPermitted(perms.Modulo_CajaGeneral || perms.Modulo_Finanzas);
 
             // Modulo Dashboard
             const dashBtns = document.querySelectorAll("#navBtn_dashboard, #mobileNavBtn_dashboard, [data-module='Modulo_Dashboard']");
@@ -8674,6 +8676,10 @@
             // Modulo Caja General & Hogar
             const cajaBtns = document.querySelectorAll("#cajaGeneralBtn, #mobileCajaGeneralBtn, [data-module='Modulo_CajaGeneral']");
             cajaBtns.forEach(b => b.style.display = modCajaGeneral ? "" : "none");
+
+            // Ocultar botón de gestión de usuarios para no administradores
+            const userMgmtBtns = document.querySelectorAll("#gestionUsuariosBtn, #mobileUsuariosBtn");
+            userMgmtBtns.forEach(b => b.style.display = "none");
         }
 
         function verifyManualEmail() {
