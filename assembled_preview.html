@@ -1753,7 +1753,7 @@
         </form>
     </div>
 
-    <!-- BLOQUE INTEGRADO: INGRESOS EXTERNOS Y METAS DE RECOLECCIÓN CON TIEMPO DEFINIDO -->
+        <!-- BLOQUE INTEGRADO: INGRESOS EXTERNOS Y METAS DE RECOLECCIÓN CON TIEMPO DEFINIDO -->
     <div class="border-t-2 border-dashed border-slate-200 dark:border-slate-800 pt-8 space-y-6">
         <div>
             <h2 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
@@ -1810,7 +1810,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Observaciones</label>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Notas / Observaciones</label>
                         <input type="text" id="extIngresoNotas" placeholder="Notas opcionales..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 border shadow-sm">
                     </div>
 
@@ -1822,50 +1822,45 @@
                 </form>
             </div>
 
-            <!-- Formulario B: Crear Meta de Recolección con Plazo Fijo -->
+            <!-- Formulario B: Crear Nueva Meta de Recolección -->
             <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-4">
                 <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span>🎯</span> Crear Meta de Recolección / Ahorro
                     </h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Establece objetivos con fecha límite para medir el ritmo de aportes.</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Establece un monto objetivo y fecha límite (Fondo de reserva / Inversión).</p>
                 </div>
 
                 <form id="crearMetaForm" onsubmit="handleCrearMeta(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Nombre de la Meta *</label>
-                        <input type="text" id="extMetaNombre" required placeholder="p.ej. Compra Guadañadora, Reserva Fértiles 2026..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
-                    </div>
-
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Nombre de la Meta *</label>
+                            <input type="text" id="extMetaNombre" required placeholder="p.ej. Compra Guadañadora, Abono Préstamo..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                        </div>
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto Objetivo (COP) *</label>
                             <div class="relative rounded-xl shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-slate-400 text-xs font-bold">$</span></div>
-                                <input type="number" step="any" id="extMetaMontoObjetivo" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                                <input type="number" step="any" id="extMetaMonto" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-amber-500 border shadow-sm">
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha Límite *</label>
-                            <input type="date" id="extMetaFechaLimite" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Categoría</label>
-                            <select id="extMetaCategoria" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm cursor-pointer">
-                                <option value="Maquinaria/Equipos">Maquinaria & Equipos</option>
-                                <option value="Insumos Agricolas">Insumos & Fertilizantes</option>
-                                <option value="Infraestructura">Infraestructura</option>
-                                <option value="Fondo de Reserva">Fondo de Reserva</option>
-                                <option value="Inversión Familiar">Inversión Personal/Familiar</option>
-                                <option value="Otro">Otro Propósito</option>
-                            </select>
+                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha Límite *</label>
+                            <input type="date" id="extMetaFechaLimite" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Detalles / Notas</label>
-                            <input type="text" id="extMetaNotas" placeholder="Notas sobre la meta..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Categoría *</label>
+                            <select id="extMetaCategoria" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm cursor-pointer">
+                                <option value="Maquinaria/Equipos">Maquinaria / Equipos</option>
+                                <option value="Infraestructura">Infraestructura Finca</option>
+                                <option value="Abono a Deuda">Abono a Préstamos/Deuda</option>
+                                <option value="Reserva Emergencias">Fondo de Emergencia</option>
+                                <option value="Insumos Cosecha">Insumos Gran Cosecha</option>
+                                <option value="Otros">Otros Objetivos</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1878,26 +1873,22 @@
             </div>
         </div>
 
-        <!-- Formulario C: Registrar Aporte a Meta -->
+        <!-- Formulario C: Aportar a Meta Existente -->
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-4">
             <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>🌱</span> Registrar Aporte a Meta de Recolección
+                    <span>📥</span> Registrar Aporte a Meta Activa
                 </h3>
                 <p class="text-xs text-slate-400 mt-0.5">Canaliza fondos (de ingresos externos o caja general) hacia un objetivo activo.</p>
             </div>
 
             <form id="aporteMetaForm" onsubmit="handleGuardarAporteMeta(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Meta Destino *</label>
-                        <select id="extAporteMetaSelect" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-bold focus:ring-2 focus:ring-emerald-500 border shadow-sm cursor-pointer">
-                            <option value="">-- Seleccionar Meta --</option>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Seleccionar Meta *</label>
+                        <select id="extAporteMetaSelector" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm cursor-pointer">
+                            <!-- Se llena dinámicamente -->
                         </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha de Aporte *</label>
-                        <input type="date" id="extAporteFecha" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto del Aporte (COP) *</label>
@@ -1986,6 +1977,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- C. Gráficos de Consumo del Hogar -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
