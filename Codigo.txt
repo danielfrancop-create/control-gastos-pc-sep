@@ -16,11 +16,12 @@ var HOJA_METAS_RECOLECCION = "metasRecoleccion";
 var HOJA_APORTES_METAS = "aportesMetas";
 
 function doGet(e) {
-  var providedEmail = (e && e.parameter && e.parameter.email) ? e.parameter.email : "";
-  var authCheck = verificarAccesoUsuario(providedEmail);
+  var authCheck = verificarAccesoUsuario();
 
-  if (!authCheck.autorizado) {
-    var userEmailDisplay = authCheck.email || "desconocido / no detectado";
+  if (!authCheck || !authCheck.autorizado || !authCheck.email) {
+    var userEmailDisplay = (authCheck && authCheck.email) ? authCheck.email : "Sesión anónima / No detectada";
+    var errorMsg = (authCheck && authCheck.error) ? authCheck.error : "Su cuenta de Google no se encuentra registrada o activa en la lista blanca de usuarios autorizados.";
+
     var htmlAccessDenied = '<!DOCTYPE html>' +
       '<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
       '<title>Acceso Denegado - Finca Los Sauces</title>' +
@@ -34,13 +35,13 @@ function doGet(e) {
       '<div>' +
       '<span class="px-3 py-1 bg-rose-500/10 text-rose-400 text-xs font-bold uppercase tracking-wider rounded-full border border-rose-500/20">Acceso Bloqueado</span>' +
       '<h1 class="text-2xl font-black mt-3 text-white">Acceso No Autorizado</h1>' +
-      '<p class="text-xs text-slate-400 mt-2">La cuenta con la que intentas ingresar no se encuentra registrada o activa en la lista de usuarios autorizados.</p>' +
+      '<p class="text-xs text-slate-400 mt-2">' + errorMsg + '</p>' +
       '</div>' +
       '<div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 text-left">' +
       '<p class="text-[11px] uppercase font-extrabold text-slate-400 tracking-wider">Cuenta Detectada:</p>' +
       '<p class="text-sm font-bold text-rose-300 mt-1 break-all">' + userEmailDisplay + '</p>' +
       '</div>' +
-      '<p class="text-xs text-slate-500">Si eres colaborador o administrador de Finca Los Sauces, solicita el registro y activación de tu correo electrónico en la lista de cuentas autorizadas.</p>' +
+      '<p class="text-xs text-slate-500">Si eres colaborador de Finca Los Sauces, inicia sesión en Google con tu cuenta autorizada o solicita el registro de tu correo electrónico al administrador.</p>' +
       '</div>' +
       '</body></html>';
 
@@ -781,6 +782,9 @@ function obtenerListaLotesActivos(ss) {
 
 function guardarRegistro(tipo, datos) {
   try {
+    var authCheck = verificarAccesoUsuario();
+    if (!authCheck.autorizado) return { success: false, error: authCheck.error || "Acceso No Autorizado." };
+
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheetName = "";
     var columnsNeeded = [];
