@@ -232,47 +232,82 @@ function aportarAMetaRecoleccion(datos) {
  * en la carpeta especificada de Google Drive (ID: 1B7Um_1m_dcuq9r85qV6TcW1LG0QXnRzu).
  */
 function crearBackupDiario() {
+  return runDailyBackup();
+}
+
+/**
+ * Función de Respaldo Diario Automatizado (runDailyBackup)
+ * Captura el estado actual de las fuentes de datos (Google Sheets / JSON consolidado),
+ * genera un respaldo espejo con marca de tiempo (YYYY-MM-DD) y lo almacena en Google Drive.
+ */
+function runDailyBackup() {
   try {
     var folderId = "1B7Um_1m_dcuq9r85qV6TcW1LG0QXnRzu";
-    var folder = DriveApp.getFolderById(folderId);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
     var timeZone = ss.getSpreadsheetTimeZone() || "America/Bogota";
-    var timestamp = Utilities.formatDate(new Date(), timeZone, "yyyy-MM-dd_HH-mm");
-    var backupName = "Backup_" + ss.getName() + "_" + timestamp;
+    var dateFormatted = Utilities.formatDate(new Date(), timeZone, "yyyy-MM-dd_HH-mm");
+    var backupName = "Backup_" + ss.getName() + "_" + dateFormatted;
 
+    var folder;
+    try {
+      folder = DriveApp.getFolderById(folderId);
+    } catch (fErr) {
+      // Si la carpeta designada no existe o no tiene permisos, crear carpeta por defecto en Drive
+      var folderName = "Finca Los Sauces - Backups Automatizados";
+      var folders = DriveApp.getFoldersByName(folderName);
+      folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+    }
+
+    // 1. Generar copia espejo del libro de cálculo
     var file = DriveApp.getFileById(ss.getId());
-    file.makeCopy(backupName, folder);
-    
-    Logger.log("Backup creado con éxito: " + backupName);
-    return { success: true, backupName: backupName };
+    var backupFile = file.makeCopy(backupName, folder);
+
+    // 2. Generar respaldo estructurado consolidado en formato JSON
+    var consolidatedData = getDashboardData();
+    if (consolidatedData && consolidatedData.success) {
+      var jsonContent = JSON.stringify(consolidatedData.data, null, 2);
+      var jsonBlob = Utilities.newBlob(jsonContent, "application/json", backupName + ".json");
+      folder.createFile(jsonBlob);
+    }
+
+    Logger.log("Backup diario ejecutado con éxito: " + backupName);
+    return { success: true, backupName: backupName, fileUrl: backupFile.getUrl() };
   } catch (err) {
-    Logger.log("Error creando backup: " + err.toString());
+    Logger.log("ERROR CRÍTICO EN BACKUP DIARIO: " + err.toString());
     return { success: false, error: err.toString() };
   }
 }
 
 /**
- * Función auxiliar para configurar el disparador (activador) automático a las 9:00 PM (21:00 h) diariamente.
- * Ejecutar esta función una sola vez en el editor de Apps Script para crear el activador.
+ * Disparador Automático (setupDailyTrigger / configurarActivadorBackupDiario)
+ * Programa automáticamente el activador time-driven diariamente a las 00:00 h.
  */
-function configurarActivadorBackupDiario() {
-  // Eliminar activadores existentes para crearBackupDiario y evitar duplicados
-  var triggers = ScriptApp.getProjectTriggers();
-  for (var i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === "crearBackupDiario") {
-      ScriptApp.deleteTrigger(triggers[i]);
+function setupDailyTrigger() {
+  try {
+    var triggers = ScriptApp.getProjectTriggers();
+    for (var i = 0; i < triggers.length; i++) {
+      var funcName = triggers[i].getHandlerFunction();
+      if (funcName === "runDailyBackup" || funcName === "crearBackupDiario") {
+        ScriptApp.deleteTrigger(triggers[i]);
+      }
     }
+
+    ScriptApp.newTrigger("runDailyBackup")
+      .timeBased()
+      .everyDays(1)
+      .atHour(0)
+      .create();
+
+    Logger.log("Activador de backup diario a las 00:00 h configurado correctamente.");
+    return { success: true, message: "Activador automático diario configurado a medianoche." };
+  } catch (err) {
+    Logger.log("Error al configurar activador diario: " + err.toString());
+    return { success: false, error: err.toString() };
   }
+}
 
-  // Crear el activador diario entre las 9:00 PM y 10:00 PM
-  ScriptApp.newTrigger("crearBackupDiario")
-    .timeBased()
-    .everyDays(1)
-    .atHour(21)
-    .create();
-
-  Logger.log("Activador de backup diario a las 9:00 PM configurado correctamente.");
+function configurarActivadorBackupDiario() {
+  return setupDailyTrigger();
 }
 
 function guardarFotoLote(datos) {
