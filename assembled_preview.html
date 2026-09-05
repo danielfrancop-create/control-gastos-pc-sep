@@ -8538,7 +8538,7 @@
         }
 
         // --- CONTROL DE ROLES Y PERMISOS DE USUARIO ---
-        let currentUserRole = "view";
+        let currentUserRole = (typeof google !== 'undefined' && google.script && google.script.run) ? "view" : "admin";
         let isUserActive = true;
         let isUserRegistered = true;
 
@@ -8551,6 +8551,9 @@
                         console.warn("Error al verificar rol de usuario:", err);
                     })
                     .getCurrentUserRole(savedEmail);
+            } else {
+                currentUserRole = "admin";
+                restoreAdminPermissions();
             }
         }
 
@@ -8641,7 +8644,7 @@
             }
 
             const buttonsToShow = document.querySelectorAll(
-                "#toggleViewBtn, #mobileToggleViewBtn, #obligacionesBtn, #mobileObligacionesBtn, #cajaGeneralBtn, #mobileCajaGeneralBtn, #gestionUsuariosBtn, #mobileUsuariosBtn, #mobileSyncBtn"
+                "#toggleViewBtn, #mobileToggleViewBtn, #obligacionesBtn, #mobileObligacionesBtn, #cajaGeneralBtn, #mobileCajaGeneralBtn, #gestionUsuariosBtn, #mobileUsuariosBtn, #mobileSyncBtn, button[onclick*='openDeleteModal'], button[onclick*='eliminarFotoGallery'], button[onclick*='openPhotoUploadModal'], button[onclick*='marcarComoPagado'], button[onclick*='startLoteCycle'], button[onclick*='endLoteCycle'], button[onclick*=\"showView('data_entry')\"]"
             );
             buttonsToShow.forEach(btn => {
                 if (btn) {
