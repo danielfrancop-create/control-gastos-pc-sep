@@ -243,25 +243,47 @@
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                         <span class="text-indigo-600">➕</span> Agregar o Modificar Usuario
                     </h4>
-                    <form id="formUsuarioAdmin" onsubmit="handleSaveUserSubmit(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                        <div class="sm:col-span-1">
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Correo Electrónico *</label>
-                            <input type="email" id="userFormEmail" required placeholder="correo@ejemplo.com" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+                    <form id="formUsuarioAdmin" onsubmit="handleSaveUserSubmit(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Correo Electrónico *</label>
+                                <input type="email" id="userFormEmail" required placeholder="correo@ejemplo.com" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre Usuario</label>
+                                <input type="text" id="userFormNombre" placeholder="Ej. Santi" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Rol *</label>
+                                <select id="userFormRol" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold cursor-pointer">
+                                    <option value="view">Operador / Solo Ver (view)</option>
+                                    <option value="admin">Administrador Total (admin)</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="sm:col-span-1">
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre Usuario</label>
-                            <input type="text" id="userFormNombre" placeholder="Ej. Santi" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+
+                        <!-- Permisos por Módulo (Usuarios_Autorizados) -->
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Permisos Específicos por Módulo</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModInicio" checked class="text-indigo-600 rounded"> Módulo Inicio
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModLotes" checked class="text-indigo-600 rounded"> Módulo Lotes
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModGastos" checked class="text-indigo-600 rounded"> Módulo Gastos
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModFinanzas" checked class="text-indigo-600 rounded"> Módulo Finanzas
+                                </label>
+                            </div>
                         </div>
-                        <div class="sm:col-span-1">
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Rol / Permisos *</label>
-                            <select id="userFormRol" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold cursor-pointer">
-                                <option value="view">Solo Ver (view)</option>
-                                <option value="admin">Administrador / Editar (admin)</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer">
-                                Guardar Usuario
+
+                        <div class="flex justify-end pt-1">
+                            <button type="submit" class="w-full sm:w-auto py-2.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer">
+                                Guardar Usuario y Permisos
                             </button>
                         </div>
                     </form>

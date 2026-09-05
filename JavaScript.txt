@@ -5813,12 +5813,46 @@
             const blockedOverlay = document.getElementById("accessBlockedOverlay");
             if (blockedOverlay) blockedOverlay.classList.add("hidden");
 
-            if (currentUserRole === "admin") {
-                restoreAdminPermissions();
+            // Aplicar permisos específicos por módulo si existen en la respuesta
+            if (response.permissions) {
+                applyModuleSpecificPermissions(response.permissions, currentUserRole);
             } else {
-                currentUserRole = "view";
-                applyViewOnlyPermissions();
+                if (currentUserRole === "admin") {
+                    restoreAdminPermissions();
+                } else {
+                    currentUserRole = "view";
+                    applyViewOnlyPermissions();
+                }
             }
+        }
+
+        function applyModuleSpecificPermissions(perms, role) {
+            if (role === "admin") {
+                restoreAdminPermissions();
+                return;
+            }
+
+            // Ocultar / Mostrar menús y botones según los permisos de la hoja Usuarios_Autorizados
+            const modInicio = perms.Modulo_Inicio === "Sí" || perms.Modulo_Inicio === "Si";
+            const modLotes = perms.Modulo_Lotes === "Sí" || perms.Modulo_Lotes === "Si";
+            const modGastos = perms.Modulo_Gastos === "Sí" || perms.Modulo_Gastos === "Si";
+            const modFinanzas = perms.Modulo_Finanzas === "Sí" || perms.Modulo_Finanzas === "Si";
+
+            // Botón/vista Inicio
+            const navInicio = document.getElementById("navBtn_dashboard");
+            if (navInicio) navInicio.style.display = modInicio ? "" : "none";
+
+            // Modulo Lotes (Mapa)
+            const mapBtns = document.querySelectorAll("#mapaLotesBtn, button[onclick*='mapa_lotes']");
+            mapBtns.forEach(b => b.style.display = modLotes ? "" : "none");
+
+            // Modulo Gastos / POS
+            const posBtns = document.querySelectorAll("#toggleViewBtn, #mobileToggleViewBtn, button[onclick*='data_entry']");
+            posBtns.forEach(b => b.style.display = modGastos ? "" : "none");
+
+            // Modulo Finanzas (Caja General, Estado Resultados, Obligaciones)
+            const finBtns = document.querySelectorAll("#cajaGeneralBtn, #mobileCajaGeneralBtn, #estadoResultadosBtn, #obligacionesBtn, #mobileObligacionesBtn");
+            finBtns.forEach(b => b.style.display = modFinanzas ? "" : "none");
         }
 
         function verifyManualEmail() {
@@ -6022,6 +6056,11 @@
             const nombre = (document.getElementById("userFormNombre").value || "").trim();
             const rol = document.getElementById("userFormRol").value || "view";
 
+            const modInicio = document.getElementById("userFormModInicio") ? (document.getElementById("userFormModInicio").checked ? "Sí" : "No") : "Sí";
+            const modLotes = document.getElementById("userFormModLotes") ? (document.getElementById("userFormModLotes").checked ? "Sí" : "No") : "Sí";
+            const modGastos = document.getElementById("userFormModGastos") ? (document.getElementById("userFormModGastos").checked ? "Sí" : "No") : "Sí";
+            const modFinanzas = document.getElementById("userFormModFinanzas") ? (document.getElementById("userFormModFinanzas").checked ? "Sí" : "No") : "Sí";
+
             if (!email) {
                 alert("Ingresa un correo electrónico válido.");
                 return;
@@ -6031,7 +6070,11 @@
                 email: email,
                 nombre: nombre || email.split('@')[0],
                 rol: rol,
-                estado: "ACTIVO"
+                estado: "ACTIVO",
+                Modulo_Inicio: modInicio,
+                Modulo_Lotes: modLotes,
+                Modulo_Gastos: modGastos,
+                Modulo_Finanzas: modFinanzas
             };
 
             showLoader(true, "Guardando usuario...");

@@ -278,22 +278,22 @@
 
                         <div id="desktopNavDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-slate-900 border border-emerald-800 ring-1 ring-black ring-opacity-5 z-50 divide-y divide-slate-800 overflow-hidden">
                             <div class="py-1">
-                                <button onclick="showView('dashboard'); toggleDesktopNavDropdown();" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-emerald-800 hover:text-white flex items-center gap-2 transition cursor-pointer">
+                                <button id="navBtn_dashboard" data-module="Modulo_Inicio" onclick="showView('dashboard'); toggleDesktopNavDropdown();" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-emerald-800 hover:text-white flex items-center gap-2 transition cursor-pointer">
                                     <span>🏠</span> Dashboard Principal
                                 </button>
-                                <button id="toggleViewBtn" onclick="showView('data_entry'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500 hover:text-slate-950 flex items-center gap-2 transition cursor-pointer">
+                                <button id="toggleViewBtn" data-module="Modulo_Gastos" onclick="showView('data_entry'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500 hover:text-slate-950 flex items-center gap-2 transition cursor-pointer">
                                     <span>📝</span> Ingresar Información
                                 </button>
-                                <button id="estadoResultadosBtn" onclick="showView('estado_resultados'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-sky-400 hover:bg-sky-500 hover:text-white flex items-center gap-2 transition cursor-pointer">
+                                <button id="estadoResultadosBtn" data-module="Modulo_Finanzas" onclick="showView('estado_resultados'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-sky-400 hover:bg-sky-500 hover:text-white flex items-center gap-2 transition cursor-pointer">
                                     <span>📊</span> Estado de Resultados
                                 </button>
-                                <button id="obligacionesBtn" onclick="showView('obligaciones'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-violet-400 hover:bg-violet-600 hover:text-white flex items-center gap-2 transition cursor-pointer">
+                                <button id="obligacionesBtn" data-module="Modulo_Finanzas" onclick="showView('obligaciones'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-violet-400 hover:bg-violet-600 hover:text-white flex items-center gap-2 transition cursor-pointer">
                                     <span>💳</span> Obligaciones / Préstamos
                                 </button>
-                                <button id="mapaLotesBtn" onclick="showView('mapa_lotes'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-700 hover:text-white flex items-center gap-2 transition cursor-pointer">
+                                <button id="mapaLotesBtn" data-module="Modulo_Lotes" onclick="showView('mapa_lotes'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-700 hover:text-white flex items-center gap-2 transition cursor-pointer">
                                     <span>🗺️</span> Mapa Interactivo
                                 </button>
-                                <button id="cajaGeneralBtn" onclick="showView('caja_general'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-teal-400 hover:bg-teal-600 hover:text-white flex items-center gap-2 transition cursor-pointer">
+                                <button id="cajaGeneralBtn" data-module="Modulo_Finanzas" onclick="showView('caja_general'); toggleDesktopNavDropdown();" class="module-nav-btn w-full text-left px-4 py-2.5 text-xs font-semibold text-teal-400 hover:bg-teal-600 hover:text-white flex items-center gap-2 transition cursor-pointer">
                                     <span>🏠</span> Caja General & Hogar
                                 </button>
                             </div>
@@ -2435,25 +2435,47 @@
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                         <span class="text-indigo-600">➕</span> Agregar o Modificar Usuario
                     </h4>
-                    <form id="formUsuarioAdmin" onsubmit="handleSaveUserSubmit(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                        <div class="sm:col-span-1">
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Correo Electrónico *</label>
-                            <input type="email" id="userFormEmail" required placeholder="correo@ejemplo.com" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+                    <form id="formUsuarioAdmin" onsubmit="handleSaveUserSubmit(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Correo Electrónico *</label>
+                                <input type="email" id="userFormEmail" required placeholder="correo@ejemplo.com" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre Usuario</label>
+                                <input type="text" id="userFormNombre" placeholder="Ej. Santi" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Rol *</label>
+                                <select id="userFormRol" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold cursor-pointer">
+                                    <option value="view">Operador / Solo Ver (view)</option>
+                                    <option value="admin">Administrador Total (admin)</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="sm:col-span-1">
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre Usuario</label>
-                            <input type="text" id="userFormNombre" placeholder="Ej. Santi" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold">
+
+                        <!-- Permisos por Módulo (Usuarios_Autorizados) -->
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Permisos Específicos por Módulo</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModInicio" checked class="text-indigo-600 rounded"> Módulo Inicio
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModLotes" checked class="text-indigo-600 rounded"> Módulo Lotes
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModGastos" checked class="text-indigo-600 rounded"> Módulo Gastos
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModFinanzas" checked class="text-indigo-600 rounded"> Módulo Finanzas
+                                </label>
+                            </div>
                         </div>
-                        <div class="sm:col-span-1">
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Rol / Permisos *</label>
-                            <select id="userFormRol" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold cursor-pointer">
-                                <option value="view">Solo Ver (view)</option>
-                                <option value="admin">Administrador / Editar (admin)</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer">
-                                Guardar Usuario
+
+                        <div class="flex justify-end pt-1">
+                            <button type="submit" class="w-full sm:w-auto py-2.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer">
+                                Guardar Usuario y Permisos
                             </button>
                         </div>
                     </form>
@@ -8415,12 +8437,46 @@
             const blockedOverlay = document.getElementById("accessBlockedOverlay");
             if (blockedOverlay) blockedOverlay.classList.add("hidden");
 
-            if (currentUserRole === "admin") {
-                restoreAdminPermissions();
+            // Aplicar permisos específicos por módulo si existen en la respuesta
+            if (response.permissions) {
+                applyModuleSpecificPermissions(response.permissions, currentUserRole);
             } else {
-                currentUserRole = "view";
-                applyViewOnlyPermissions();
+                if (currentUserRole === "admin") {
+                    restoreAdminPermissions();
+                } else {
+                    currentUserRole = "view";
+                    applyViewOnlyPermissions();
+                }
             }
+        }
+
+        function applyModuleSpecificPermissions(perms, role) {
+            if (role === "admin") {
+                restoreAdminPermissions();
+                return;
+            }
+
+            // Ocultar / Mostrar menús y botones según los permisos de la hoja Usuarios_Autorizados
+            const modInicio = perms.Modulo_Inicio === "Sí" || perms.Modulo_Inicio === "Si";
+            const modLotes = perms.Modulo_Lotes === "Sí" || perms.Modulo_Lotes === "Si";
+            const modGastos = perms.Modulo_Gastos === "Sí" || perms.Modulo_Gastos === "Si";
+            const modFinanzas = perms.Modulo_Finanzas === "Sí" || perms.Modulo_Finanzas === "Si";
+
+            // Botón/vista Inicio
+            const navInicio = document.getElementById("navBtn_dashboard");
+            if (navInicio) navInicio.style.display = modInicio ? "" : "none";
+
+            // Modulo Lotes (Mapa)
+            const mapBtns = document.querySelectorAll("#mapaLotesBtn, button[onclick*='mapa_lotes']");
+            mapBtns.forEach(b => b.style.display = modLotes ? "" : "none");
+
+            // Modulo Gastos / POS
+            const posBtns = document.querySelectorAll("#toggleViewBtn, #mobileToggleViewBtn, button[onclick*='data_entry']");
+            posBtns.forEach(b => b.style.display = modGastos ? "" : "none");
+
+            // Modulo Finanzas (Caja General, Estado Resultados, Obligaciones)
+            const finBtns = document.querySelectorAll("#cajaGeneralBtn, #mobileCajaGeneralBtn, #estadoResultadosBtn, #obligacionesBtn, #mobileObligacionesBtn");
+            finBtns.forEach(b => b.style.display = modFinanzas ? "" : "none");
         }
 
         function verifyManualEmail() {
@@ -8624,6 +8680,11 @@
             const nombre = (document.getElementById("userFormNombre").value || "").trim();
             const rol = document.getElementById("userFormRol").value || "view";
 
+            const modInicio = document.getElementById("userFormModInicio") ? (document.getElementById("userFormModInicio").checked ? "Sí" : "No") : "Sí";
+            const modLotes = document.getElementById("userFormModLotes") ? (document.getElementById("userFormModLotes").checked ? "Sí" : "No") : "Sí";
+            const modGastos = document.getElementById("userFormModGastos") ? (document.getElementById("userFormModGastos").checked ? "Sí" : "No") : "Sí";
+            const modFinanzas = document.getElementById("userFormModFinanzas") ? (document.getElementById("userFormModFinanzas").checked ? "Sí" : "No") : "Sí";
+
             if (!email) {
                 alert("Ingresa un correo electrónico válido.");
                 return;
@@ -8633,7 +8694,11 @@
                 email: email,
                 nombre: nombre || email.split('@')[0],
                 rol: rol,
-                estado: "ACTIVO"
+                estado: "ACTIVO",
+                Modulo_Inicio: modInicio,
+                Modulo_Lotes: modLotes,
+                Modulo_Gastos: modGastos,
+                Modulo_Finanzas: modFinanzas
             };
 
             showLoader(true, "Guardando usuario...");
