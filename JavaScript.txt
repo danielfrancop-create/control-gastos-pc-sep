@@ -5832,27 +5832,37 @@
                 return;
             }
 
-            // Ocultar / Mostrar menús y botones según los permisos de la hoja Usuarios_Autorizados
-            const modInicio = perms.Modulo_Inicio === "Sí" || perms.Modulo_Inicio === "Si";
-            const modLotes = perms.Modulo_Lotes === "Sí" || perms.Modulo_Lotes === "Si";
-            const modGastos = perms.Modulo_Gastos === "Sí" || perms.Modulo_Gastos === "Si";
-            const modFinanzas = perms.Modulo_Finanzas === "Sí" || perms.Modulo_Finanzas === "Si";
+            // Ocultar / Mostrar menús y botones según los permisos específicos por módulo
+            const modDashboard = (perms.Modulo_Dashboard || perms.Modulo_Inicio) === "Sí" || (perms.Modulo_Dashboard || perms.Modulo_Inicio) === "Si";
+            const modPOS = (perms.Modulo_POS || perms.Modulo_Gastos) === "Sí" || (perms.Modulo_POS || perms.Modulo_Gastos) === "Si";
+            const modEstadoResultados = (perms.Modulo_EstadoResultados || perms.Modulo_Finanzas) === "Sí" || (perms.Modulo_EstadoResultados || perms.Modulo_Finanzas) === "Si";
+            const modObligaciones = (perms.Modulo_Obligaciones || perms.Modulo_Finanzas) === "Sí" || (perms.Modulo_Obligaciones || perms.Modulo_Finanzas) === "Si";
+            const modMapaLotes = (perms.Modulo_MapaLotes || perms.Modulo_Lotes) === "Sí" || (perms.Modulo_MapaLotes || perms.Modulo_Lotes) === "Si";
+            const modCajaGeneral = (perms.Modulo_CajaGeneral || perms.Modulo_Finanzas) === "Sí" || (perms.Modulo_CajaGeneral || perms.Modulo_Finanzas) === "Si";
 
-            // Botón/vista Inicio
-            const navInicio = document.getElementById("navBtn_dashboard");
-            if (navInicio) navInicio.style.display = modInicio ? "" : "none";
+            // Modulo Dashboard
+            const dashBtns = document.querySelectorAll("#navBtn_dashboard, #mobileNavBtn_dashboard, [data-module='Modulo_Dashboard']");
+            dashBtns.forEach(b => b.style.display = modDashboard ? "" : "none");
 
-            // Modulo Lotes (Mapa)
-            const mapBtns = document.querySelectorAll("#mapaLotesBtn, button[onclick*='mapa_lotes']");
-            mapBtns.forEach(b => b.style.display = modLotes ? "" : "none");
+            // Modulo POS / Ingresar Info
+            const posBtns = document.querySelectorAll("#toggleViewBtn, #mobileToggleViewBtn, [data-module='Modulo_POS']");
+            posBtns.forEach(b => b.style.display = modPOS ? "" : "none");
 
-            // Modulo Gastos / POS
-            const posBtns = document.querySelectorAll("#toggleViewBtn, #mobileToggleViewBtn, button[onclick*='data_entry']");
-            posBtns.forEach(b => b.style.display = modGastos ? "" : "none");
+            // Modulo Estado Resultados
+            const erBtns = document.querySelectorAll("#estadoResultadosBtn, #mobileEstadoResultadosBtn, [data-module='Modulo_EstadoResultados']");
+            erBtns.forEach(b => b.style.display = modEstadoResultados ? "" : "none");
 
-            // Modulo Finanzas (Caja General, Estado Resultados, Obligaciones)
-            const finBtns = document.querySelectorAll("#cajaGeneralBtn, #mobileCajaGeneralBtn, #estadoResultadosBtn, #obligacionesBtn, #mobileObligacionesBtn");
-            finBtns.forEach(b => b.style.display = modFinanzas ? "" : "none");
+            // Modulo Obligaciones
+            const obBtns = document.querySelectorAll("#obligacionesBtn, #mobileObligacionesBtn, [data-module='Modulo_Obligaciones']");
+            obBtns.forEach(b => b.style.display = modObligaciones ? "" : "none");
+
+            // Modulo Mapa Lotes
+            const mapBtns = document.querySelectorAll("#mapaLotesBtn, #mobileMapaLotesBtn, [data-module='Modulo_MapaLotes']");
+            mapBtns.forEach(b => b.style.display = modMapaLotes ? "" : "none");
+
+            // Modulo Caja General & Hogar
+            const cajaBtns = document.querySelectorAll("#cajaGeneralBtn, #mobileCajaGeneralBtn, [data-module='Modulo_CajaGeneral']");
+            cajaBtns.forEach(b => b.style.display = modCajaGeneral ? "" : "none");
         }
 
         function verifyManualEmail() {
@@ -6047,6 +6057,16 @@
             document.getElementById("userFormEmail").value = email || "";
             document.getElementById("userFormNombre").value = nombre || "";
             document.getElementById("userFormRol").value = rol || "view";
+
+            const user = usuariosListCache.find(u => u.email.toLowerCase() === (email || "").toLowerCase());
+            if (user) {
+                if (document.getElementById("userFormModDashboard")) document.getElementById("userFormModDashboard").checked = user.moduloDashboard !== "No";
+                if (document.getElementById("userFormModPOS")) document.getElementById("userFormModPOS").checked = user.moduloPOS !== "No";
+                if (document.getElementById("userFormModEstadoResultados")) document.getElementById("userFormModEstadoResultados").checked = user.moduloEstadoResultados !== "No";
+                if (document.getElementById("userFormModObligaciones")) document.getElementById("userFormModObligaciones").checked = user.moduloObligaciones !== "No";
+                if (document.getElementById("userFormModMapaLotes")) document.getElementById("userFormModMapaLotes").checked = user.moduloMapaLotes !== "No";
+                if (document.getElementById("userFormModCajaGeneral")) document.getElementById("userFormModCajaGeneral").checked = user.moduloCajaGeneral !== "No";
+            }
         }
 
         function handleSaveUserSubmit(event) {
@@ -6056,10 +6076,12 @@
             const nombre = (document.getElementById("userFormNombre").value || "").trim();
             const rol = document.getElementById("userFormRol").value || "view";
 
-            const modInicio = document.getElementById("userFormModInicio") ? (document.getElementById("userFormModInicio").checked ? "Sí" : "No") : "Sí";
-            const modLotes = document.getElementById("userFormModLotes") ? (document.getElementById("userFormModLotes").checked ? "Sí" : "No") : "Sí";
-            const modGastos = document.getElementById("userFormModGastos") ? (document.getElementById("userFormModGastos").checked ? "Sí" : "No") : "Sí";
-            const modFinanzas = document.getElementById("userFormModFinanzas") ? (document.getElementById("userFormModFinanzas").checked ? "Sí" : "No") : "Sí";
+            const modDashboard = document.getElementById("userFormModDashboard") ? (document.getElementById("userFormModDashboard").checked ? "Sí" : "No") : "Sí";
+            const modPOS = document.getElementById("userFormModPOS") ? (document.getElementById("userFormModPOS").checked ? "Sí" : "No") : "Sí";
+            const modEstadoResultados = document.getElementById("userFormModEstadoResultados") ? (document.getElementById("userFormModEstadoResultados").checked ? "Sí" : "No") : "Sí";
+            const modObligaciones = document.getElementById("userFormModObligaciones") ? (document.getElementById("userFormModObligaciones").checked ? "Sí" : "No") : "Sí";
+            const modMapaLotes = document.getElementById("userFormModMapaLotes") ? (document.getElementById("userFormModMapaLotes").checked ? "Sí" : "No") : "Sí";
+            const modCajaGeneral = document.getElementById("userFormModCajaGeneral") ? (document.getElementById("userFormModCajaGeneral").checked ? "Sí" : "No") : "Sí";
 
             if (!email) {
                 alert("Ingresa un correo electrónico válido.");
@@ -6071,10 +6093,12 @@
                 nombre: nombre || email.split('@')[0],
                 rol: rol,
                 estado: "ACTIVO",
-                Modulo_Inicio: modInicio,
-                Modulo_Lotes: modLotes,
-                Modulo_Gastos: modGastos,
-                Modulo_Finanzas: modFinanzas
+                Modulo_Dashboard: modDashboard,
+                Modulo_POS: modPOS,
+                Modulo_EstadoResultados: modEstadoResultados,
+                Modulo_Obligaciones: modObligaciones,
+                Modulo_MapaLotes: modMapaLotes,
+                Modulo_CajaGeneral: modCajaGeneral
             };
 
             showLoader(true, "Guardando usuario...");

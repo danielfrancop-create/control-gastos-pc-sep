@@ -5,12 +5,44 @@
 var HOJA_USUARIOS = "Usuarios_Autorizados";
 var HOJA_USUARIOS_LEGACY = "Usuarios";
 
+var HEADERS_USUARIOS = [
+  "ID",
+  "Correo_Electronico",
+  "Nombre",
+  "Rol",
+  "Estado",
+  "Modulo_Dashboard",
+  "Modulo_POS",
+  "Modulo_EstadoResultados",
+  "Modulo_Obligaciones",
+  "Modulo_MapaLotes",
+  "Modulo_CajaGeneral"
+];
+
 /**
  * Función que verifica la existencia de la hoja Usuarios_Autorizados y determina el rol y permisos por módulo del usuario activo.
  * @param {string} [providedEmail] Correo opcional enviado desde la vista para verificación
  * @return {Object} Objeto JSON con success, registered, active, email, role y permissions por módulo
  */
 function getCurrentUserRole(providedEmail) {
+  var defaultNoPerms = {
+    Modulo_Dashboard: "No",
+    Modulo_POS: "No",
+    Modulo_EstadoResultados: "No",
+    Modulo_Obligaciones: "No",
+    Modulo_MapaLotes: "No",
+    Modulo_CajaGeneral: "No"
+  };
+
+  var defaultAdminPerms = {
+    Modulo_Dashboard: "Sí",
+    Modulo_POS: "Sí",
+    Modulo_EstadoResultados: "Sí",
+    Modulo_Obligaciones: "Sí",
+    Modulo_MapaLotes: "Sí",
+    Modulo_CajaGeneral: "Sí"
+  };
+
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     if (!ss) {
@@ -20,13 +52,12 @@ function getCurrentUserRole(providedEmail) {
         active: false,
         email: "",
         role: "view",
-        permissions: { Modulo_Inicio: "No", Modulo_Lotes: "No", Modulo_Gastos: "No", Modulo_Finanzas: "No" },
+        permissions: defaultNoPerms,
         error: "No se pudo obtener la hoja de cálculo activa."
       };
     }
 
     var sheet = ss.getSheetByName(HOJA_USUARIOS);
-    var headersNeeded = ["ID", "Correo_Electronico", "Nombre", "Rol", "Estado", "Modulo_Inicio", "Modulo_Lotes", "Modulo_Gastos", "Modulo_Finanzas"];
 
     if (!sheet) {
       // Migración si existe la hoja Usuarios legacy
@@ -36,11 +67,11 @@ function getCurrentUserRole(providedEmail) {
       }
       if (!sheet) {
         sheet = ss.insertSheet(HOJA_USUARIOS);
-        sheet.appendRow(headersNeeded);
+        sheet.appendRow(HEADERS_USUARIOS);
       }
     }
     if (typeof asegurarColumnas === "function") {
-      asegurarColumnas(sheet, headersNeeded);
+      asegurarColumnas(sheet, HEADERS_USUARIOS);
     }
 
     // 1. Obtener correo del usuario activo de Google
@@ -58,8 +89,6 @@ function getCurrentUserRole(providedEmail) {
       }
     } catch (e) { effectiveEmail = ""; }
 
-    // Determinar correo a validar:
-    // 1) Correo explícito enviado desde cliente/URL, o 2) Session activeEmail, o 3) Session effectiveEmail
     var userEmail = "";
     if (providedEmail && typeof providedEmail === "string" && providedEmail.trim()) {
       userEmail = providedEmail.trim().toLowerCase();
@@ -71,13 +100,11 @@ function getCurrentUserRole(providedEmail) {
 
     var lastRow = sheet.getLastRow();
 
-    var defaultAdminPerms = { Modulo_Inicio: "Sí", Modulo_Lotes: "Sí", Modulo_Gastos: "Sí", Modulo_Finanzas: "Sí" };
-
-    // Si la hoja Usuarios_Autorizados está vacía (solo encabezado), inicializar con la cuenta activa/proporcionada como primer Administrador
+    // Si la hoja Usuarios_Autorizados está vacía (solo encabezado), inicializar con el usuario como primer Administrador
     if (lastRow < 2) {
       var initialAdmin = userEmail || activeEmail || effectiveEmail || "admin@fincasauces.com";
       initialAdmin = initialAdmin.trim().toLowerCase();
-      sheet.appendRow(["USR-001", initialAdmin, initialAdmin.split('@')[0], "admin", "ACTIVO", "Sí", "Sí", "Sí", "Sí"]);
+      sheet.appendRow(["USR-001", initialAdmin, initialAdmin.split('@')[0], "admin", "ACTIVO", "Sí", "Sí", "Sí", "Sí", "Sí", "Sí"]);
       return {
         success: true,
         registered: true,
@@ -88,7 +115,7 @@ function getCurrentUserRole(providedEmail) {
       };
     }
 
-    // Si no se proporcionó ningún correo ni se detectó en la sesión, solicitar ingreso
+    // Si no se detectó correo
     if (!userEmail) {
       return {
         success: true,
@@ -96,7 +123,7 @@ function getCurrentUserRole(providedEmail) {
         active: false,
         email: "",
         role: "view",
-        permissions: { Modulo_Inicio: "No", Modulo_Lotes: "No", Modulo_Gastos: "No", Modulo_Finanzas: "No" },
+        permissions: defaultNoPerms,
         error: "NO_EMAIL_DETECTED"
       };
     }
@@ -105,24 +132,15 @@ function getCurrentUserRole(providedEmail) {
     var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
     var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
 
-    var emailColIdx = 1;
-    var roleColIdx = 3;
-    var statusColIdx = 4;
-    var modInicioColIdx = -1;
-    var modLotesColIdx = -1;
-    var modGastosColIdx = -1;
-    var modFinanzasColIdx = -1;
-
+    var colMap = {};
     for (var c = 0; c < headers.length; c++) {
       var h = headers[c].toString().trim().toLowerCase();
-      if (h === "correo_electronico" || h === "email" || h === "correo") emailColIdx = c;
-      if (h === "rol" || h === "role") roleColIdx = c;
-      if (h === "estado" || h === "status") statusColIdx = c;
-      if (h === "modulo_inicio") modInicioColIdx = c;
-      if (h === "modulo_lotes") modLotesColIdx = c;
-      if (h === "modulo_gastos") modGastosColIdx = c;
-      if (h === "modulo_finanzas") modFinanzasColIdx = c;
+      colMap[h] = c;
     }
+
+    var emailColIdx = colMap["correo_electronico"] !== undefined ? colMap["correo_electronico"] : (colMap["email"] !== undefined ? colMap["email"] : 1);
+    var roleColIdx = colMap["rol"] !== undefined ? colMap["rol"] : (colMap["role"] !== undefined ? colMap["role"] : 3);
+    var statusColIdx = colMap["estado"] !== undefined ? colMap["estado"] : (colMap["status"] !== undefined ? colMap["status"] : 4);
 
     var foundUser = null;
     for (var r = 0; r < values.length; r++) {
@@ -131,13 +149,25 @@ function getCurrentUserRole(providedEmail) {
       if (rowEmail === userEmail) {
         var role = row[roleColIdx] ? row[roleColIdx].toString().trim().toLowerCase() : "view";
         var status = row[statusColIdx] ? row[statusColIdx].toString().trim().toUpperCase() : "INACTIVO";
-
         var isA = (role === "admin");
+
+        var getPerm = function(primaryKey, fallbackKey) {
+          if (colMap[primaryKey] !== undefined && row[colMap[primaryKey]] !== undefined && row[colMap[primaryKey]] !== "") {
+            return row[colMap[primaryKey]].toString().trim();
+          }
+          if (fallbackKey && colMap[fallbackKey] !== undefined && row[colMap[fallbackKey]] !== undefined && row[colMap[fallbackKey]] !== "") {
+            return row[colMap[fallbackKey]].toString().trim();
+          }
+          return isA ? "Sí" : "Sí";
+        };
+
         var perms = {
-          Modulo_Inicio: modInicioColIdx >= 0 ? (row[modInicioColIdx] || (isA ? "Sí" : "Sí")).toString().trim() : (isA ? "Sí" : "Sí"),
-          Modulo_Lotes: modLotesColIdx >= 0 ? (row[modLotesColIdx] || (isA ? "Sí" : "Sí")).toString().trim() : (isA ? "Sí" : "Sí"),
-          Modulo_Gastos: modGastosColIdx >= 0 ? (row[modGastosColIdx] || (isA ? "Sí" : "Sí")).toString().trim() : (isA ? "Sí" : "Sí"),
-          Modulo_Finanzas: modFinanzasColIdx >= 0 ? (row[modFinanzasColIdx] || (isA ? "Sí" : "Sí")).toString().trim() : (isA ? "Sí" : "Sí")
+          Modulo_Dashboard: getPerm("modulo_dashboard", "modulo_inicio"),
+          Modulo_POS: getPerm("modulo_pos", "modulo_gastos"),
+          Modulo_EstadoResultados: getPerm("modulo_estadoresultados", "modulo_finanzas"),
+          Modulo_Obligaciones: getPerm("modulo_obligaciones", "modulo_finanzas"),
+          Modulo_MapaLotes: getPerm("modulo_mapalotes", "modulo_lotes"),
+          Modulo_CajaGeneral: getPerm("modulo_cajageneral", "modulo_finanzas")
         };
 
         foundUser = {
@@ -157,7 +187,7 @@ function getCurrentUserRole(providedEmail) {
         active: false,
         email: userEmail,
         role: "view",
-        permissions: { Modulo_Inicio: "No", Modulo_Lotes: "No", Modulo_Gastos: "No", Modulo_Finanzas: "No" },
+        permissions: defaultNoPerms,
         error: "Acceso denegado: El correo " + userEmail + " no está en la lista blanca de Usuarios_Autorizados."
       };
     }
@@ -180,7 +210,7 @@ function getCurrentUserRole(providedEmail) {
       active: false,
       email: "",
       role: "view",
-      permissions: { Modulo_Inicio: "No", Modulo_Lotes: "No", Modulo_Gastos: "No", Modulo_Finanzas: "No" },
+      permissions: defaultNoPerms,
       error: err.toString()
     };
   }
@@ -188,7 +218,6 @@ function getCurrentUserRole(providedEmail) {
 
 /**
  * Helper estricto de validación backend.
- * Retorna { autorizado: true, email: string, role: string, permissions: object } si la cuenta está registrada y activa en Usuarios_Autorizados.
  */
 function verificarAccesoUsuario(emailOpcional) {
   var roleInfo = getCurrentUserRole(emailOpcional);
@@ -204,14 +233,20 @@ function verificarAccesoUsuario(emailOpcional) {
     autorizado: false,
     email: roleInfo ? roleInfo.email : "",
     role: "denied",
-    permissions: { Modulo_Inicio: "No", Modulo_Lotes: "No", Modulo_Gastos: "No", Modulo_Finanzas: "No" },
+    permissions: {
+      Modulo_Dashboard: "No",
+      Modulo_POS: "No",
+      Modulo_EstadoResultados: "No",
+      Modulo_Obligaciones: "No",
+      Modulo_MapaLotes: "No",
+      Modulo_CajaGeneral: "No"
+    },
     error: roleInfo && roleInfo.error ? roleInfo.error : "Acceso No Autorizado: La cuenta no se encuentra registrada o activa en el sistema."
   };
 }
 
 /**
- * Obtiene la lista completa de usuarios registrados en la hoja Usuarios.
- * @return {Object} Objeto JSON con success y la lista de usuarios.
+ * Obtiene la lista completa de usuarios registrados en la hoja Usuarios_Autorizados.
  */
 function obtenerListaUsuarios() {
   try {
@@ -249,10 +284,12 @@ function obtenerListaUsuarios() {
           nombre: userObj.Nombre || (uEmail ? uEmail.split('@')[0] : ""),
           rol: (userObj.Rol || userObj.Role || "view").toLowerCase() === "admin" ? "admin" : "view",
           estado: (userObj.Estado || userObj.Status || "ACTIVO").toUpperCase(),
-          moduloInicio: userObj.Modulo_Inicio || "Sí",
-          moduloLotes: userObj.Modulo_Lotes || "Sí",
-          moduloGastos: userObj.Modulo_Gastos || "Sí",
-          moduloFinanzas: userObj.Modulo_Finanzas || "Sí"
+          moduloDashboard: userObj.Modulo_Dashboard || userObj.Modulo_Inicio || "Sí",
+          moduloPOS: userObj.Modulo_POS || userObj.Modulo_Gastos || "Sí",
+          moduloEstadoResultados: userObj.Modulo_EstadoResultados || userObj.Modulo_Finanzas || "Sí",
+          moduloObligaciones: userObj.Modulo_Obligaciones || userObj.Modulo_Finanzas || "Sí",
+          moduloMapaLotes: userObj.Modulo_MapaLotes || userObj.Modulo_Lotes || "Sí",
+          moduloCajaGeneral: userObj.Modulo_CajaGeneral || userObj.Modulo_Finanzas || "Sí"
         });
       }
     }
@@ -265,8 +302,6 @@ function obtenerListaUsuarios() {
 
 /**
  * Agrega o actualiza un usuario en la hoja Usuarios_Autorizados.
- * @param {Object} datos - Objeto con email, nombre, rol ("admin" o "view"), estado y permisos por módulo
- * @return {Object} Objeto JSON con el resultado de la operación.
  */
 function guardarUsuario(datos) {
   try {
@@ -275,10 +310,12 @@ function guardarUsuario(datos) {
     var rol = (datos.rol || datos.Rol || "view").toLowerCase() === "admin" ? "admin" : "view";
     var estado = (datos.estado || datos.Estado || "ACTIVO").toUpperCase();
 
-    var modInicio = (datos.Modulo_Inicio || datos.modulo_inicio || "Sí");
-    var modLotes = (datos.Modulo_Lotes || datos.modulo_lotes || "Sí");
-    var modGastos = (datos.Modulo_Gastos || datos.modulo_gastos || "Sí");
-    var modFinanzas = (datos.Modulo_Finanzas || datos.modulo_finanzas || "Sí");
+    var modDashboard = datos.Modulo_Dashboard || datos.moduloDashboard || "Sí";
+    var modPOS = datos.Modulo_POS || datos.moduloPOS || "Sí";
+    var modEstadoResultados = datos.Modulo_EstadoResultados || datos.moduloEstadoResultados || "Sí";
+    var modObligaciones = datos.Modulo_Obligaciones || datos.moduloObligaciones || "Sí";
+    var modMapaLotes = datos.Modulo_MapaLotes || datos.moduloMapaLotes || "Sí";
+    var modCajaGeneral = datos.Modulo_CajaGeneral || datos.moduloCajaGeneral || "Sí";
 
     email = email.trim().toLowerCase();
     if (!email) return { success: false, error: "El correo electrónico es obligatorio." };
@@ -287,33 +324,28 @@ function guardarUsuario(datos) {
     if (!ss) return { success: false, error: "No se encontró la hoja de cálculo." };
 
     var sheet = ss.getSheetByName(HOJA_USUARIOS);
-    var headersNeeded = ["ID", "Correo_Electronico", "Nombre", "Rol", "Estado", "Modulo_Inicio", "Modulo_Lotes", "Modulo_Gastos", "Modulo_Finanzas"];
 
     if (!sheet) {
       sheet = ss.insertSheet(HOJA_USUARIOS);
-      sheet.appendRow(headersNeeded);
+      sheet.appendRow(HEADERS_USUARIOS);
     }
     if (typeof asegurarColumnas === "function") {
-      asegurarColumnas(sheet, headersNeeded);
+      asegurarColumnas(sheet, HEADERS_USUARIOS);
     }
 
     var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+    var colMap = {};
+    for (var c = 0; c < headers.length; c++) {
+      colMap[headers[c].toString().trim()] = c + 1; // 1-based index
+    }
+
     var emailRowIdx = -1;
-
     if (lastRow >= 2) {
-      var lastCol = sheet.getLastColumn();
-      var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
       var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
-
-      var emailColIdx = -1;
-      for (var c = 0; c < headers.length; c++) {
-        var h = headers[c].toString().trim().toLowerCase();
-        if (h === "email" || h === "correo") {
-          emailColIdx = c;
-          break;
-        }
-      }
-      if (emailColIdx === -1) emailColIdx = 1;
+      var emailColIdx = (colMap["Correo_Electronico"] || colMap["Email"] || colMap["Correo"] || 2) - 1;
 
       for (var r = 0; r < values.length; r++) {
         var rowEmail = values[r][emailColIdx] ? values[r][emailColIdx].toString().trim().toLowerCase() : "";
@@ -324,21 +356,39 @@ function guardarUsuario(datos) {
       }
     }
 
+    var rowValuesMap = {
+      "Correo_Electronico": email,
+      "Nombre": nombre,
+      "Rol": rol,
+      "Estado": estado,
+      "Modulo_Dashboard": modDashboard,
+      "Modulo_POS": modPOS,
+      "Modulo_EstadoResultados": modEstadoResultados,
+      "Modulo_Obligaciones": modObligaciones,
+      "Modulo_MapaLotes": modMapaLotes,
+      "Modulo_CajaGeneral": modCajaGeneral
+    };
+
     if (emailRowIdx !== -1) {
-      // Actualizar usuario existente
-      sheet.getRange(emailRowIdx, 3).setValue(nombre);
-      sheet.getRange(emailRowIdx, 4).setValue(rol);
-      sheet.getRange(emailRowIdx, 5).setValue(estado);
-      sheet.getRange(emailRowIdx, 6).setValue(modInicio);
-      sheet.getRange(emailRowIdx, 7).setValue(modLotes);
-      sheet.getRange(emailRowIdx, 8).setValue(modGastos);
-      sheet.getRange(emailRowIdx, 9).setValue(modFinanzas);
+      // Actualizar usuario existente columna por columna según encabezados
+      for (var key in rowValuesMap) {
+        if (colMap[key]) {
+          sheet.getRange(emailRowIdx, colMap[key]).setValue(rowValuesMap[key]);
+        }
+      }
       return { success: true, message: "Usuario " + email + " actualizado correctamente." };
     } else {
-      // Insertar nuevo usuario
-      var nextNum = lastRow < 2 ? 1 : (lastRow);
+      // Insertar nuevo usuario armando fila según HEADERS_USUARIOS
+      var nextNum = lastRow < 2 ? 1 : lastRow;
       var idUsr = "USR-" + String(nextNum).padStart(3, '0');
-      sheet.appendRow([idUsr, email, nombre, rol, estado, modInicio, modLotes, modGastos, modFinanzas]);
+      rowValuesMap["ID"] = idUsr;
+
+      var newRow = [];
+      for (var i = 0; i < HEADERS_USUARIOS.length; i++) {
+        var head = HEADERS_USUARIOS[i];
+        newRow.push(rowValuesMap[head] !== undefined ? rowValuesMap[head] : "Sí");
+      }
+      sheet.appendRow(newRow);
       return { success: true, message: "Usuario " + email + " registrado con éxito." };
     }
   } catch (err) {
@@ -347,9 +397,7 @@ function guardarUsuario(datos) {
 }
 
 /**
- * Elimina un usuario de la hoja Usuarios por correo electrónico.
- * @param {string} email - Correo del usuario a eliminar.
- * @return {Object} Objeto JSON con el resultado.
+ * Elimina un usuario de la hoja Usuarios_Autorizados por correo electrónico.
  */
 function eliminarUsuario(email) {
   try {
@@ -372,7 +420,7 @@ function eliminarUsuario(email) {
     var emailColIdx = -1;
     for (var c = 0; c < headers.length; c++) {
       var h = headers[c].toString().trim().toLowerCase();
-      if (h === "email" || h === "correo") {
+      if (h === "correo_electronico" || h === "email" || h === "correo") {
         emailColIdx = c;
         break;
       }

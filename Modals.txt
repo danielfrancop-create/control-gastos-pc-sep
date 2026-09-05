@@ -265,18 +265,24 @@
                         <!-- Permisos por Módulo (Usuarios_Autorizados) -->
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Permisos Específicos por Módulo</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                                 <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                                    <input type="checkbox" id="userFormModInicio" checked class="text-indigo-600 rounded"> Módulo Inicio
+                                    <input type="checkbox" id="userFormModDashboard" checked class="text-indigo-600 rounded"> Dashboard Principal
                                 </label>
                                 <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                                    <input type="checkbox" id="userFormModLotes" checked class="text-indigo-600 rounded"> Módulo Lotes
+                                    <input type="checkbox" id="userFormModPOS" checked class="text-indigo-600 rounded"> Ingresar Info / POS
                                 </label>
                                 <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                                    <input type="checkbox" id="userFormModGastos" checked class="text-indigo-600 rounded"> Módulo Gastos
+                                    <input type="checkbox" id="userFormModEstadoResultados" checked class="text-indigo-600 rounded"> Estado Resultados
                                 </label>
                                 <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                                    <input type="checkbox" id="userFormModFinanzas" checked class="text-indigo-600 rounded"> Módulo Finanzas
+                                    <input type="checkbox" id="userFormModObligaciones" checked class="text-indigo-600 rounded"> Obligaciones
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModMapaLotes" checked class="text-indigo-600 rounded"> Mapa Interactivo
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="userFormModCajaGeneral" checked class="text-indigo-600 rounded"> Caja General & Hogar
                                 </label>
                             </div>
                         </div>
