@@ -86,12 +86,12 @@
                             <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto Objetivo (COP) *</label>
                             <div class="relative rounded-xl shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-slate-400 text-xs font-bold">$</span></div>
-                                <input type="number" step="any" id="extMetaMonto" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-amber-500 border shadow-sm">
+                                <input type="number" step="any" id="extMetaMontoObjetivo" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-amber-500 border shadow-sm">
                             </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha Límite *</label>
                             <input type="date" id="extMetaFechaLimite" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
@@ -106,6 +106,10 @@
                                 <option value="Insumos Cosecha">Insumos Gran Cosecha</option>
                                 <option value="Otros">Otros Objetivos</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Notas / Detalle</label>
+                            <input type="text" id="extMetaNotas" placeholder="Notas opcionales..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-amber-500 border shadow-sm">
                         </div>
                     </div>
 
@@ -128,15 +132,19 @@
             </div>
 
             <form id="aporteMetaForm" onsubmit="handleGuardarAporteMeta(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Seleccionar Meta *</label>
-                        <select id="extAporteMetaSelector" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm cursor-pointer">
+                        <select id="extAporteMetaSelect" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm cursor-pointer">
                             <!-- Se llena dinámicamente -->
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto del Aporte (COP) *</label>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Fecha Aporte *</label>
+                        <input type="date" id="extAporteFecha" required class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 px-3 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 border shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">Monto (COP) *</label>
                         <div class="relative rounded-xl shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-slate-400 text-xs font-bold">$</span></div>
                             <input type="number" step="any" id="extAporteMonto" required min="1" placeholder="0" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white py-2 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-emerald-500 border shadow-sm">
