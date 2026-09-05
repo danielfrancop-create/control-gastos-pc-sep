@@ -310,6 +310,67 @@ function configurarActivadorBackupDiario() {
   return setupDailyTrigger();
 }
 
+/**
+ * Función de Consolidación para Exportación a Excel (exportToExcelData)
+ * Compila y estandariza todas las tablas de datos activas (gastos, ventas,
+ * ingresos externos, metas, aportes y bitácora) con encabezados normalizados en UTF-8.
+ */
+function exportToExcelData() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var data = {
+      gastosIniciales: getSheetData(ss, HOJA_GASTOS_INICIALES),
+      gastosDesarrollo: getSheetData(ss, HOJA_GASTOS_DESARROLLO),
+      ventas: getSheetData(ss, HOJA_VENTAS),
+      gastosPersonales: getSheetData(ss, HOJA_GASTOS_PERSONALES),
+      ingresosExternos: getSheetData(ss, HOJA_INGRESOS_EXTERNOS),
+      metasRecoleccion: getSheetData(ss, HOJA_METAS_RECOLECCION),
+      aportesMetas: getSheetData(ss, HOJA_APORTES_METAS),
+      fotosLotes: getSheetData(ss, HOJA_FOTOS_LOTES)
+    };
+
+    var csvContent = "\uFEFF"; // UTF-8 BOM
+    csvContent += "FINCA LOS SAUCES - CONSOLIDADO GENERAL DE INFORMACIÓN\n";
+    csvContent += "Fecha de Exportación:;" + formatDateNative(new Date()) + "\n\n";
+
+    // 1. SECCIÓN: GASTOS Y VENTAS AGRÍCOLAS
+    csvContent += "--- TRANSACCIONES AGRÍCOLAS Y LOTES ---\n";
+    csvContent += "Tipo_Registro;Lote;Cultivo_Insumo_Producto;Cantidad;Monto_COP;Estado_Pago;Fecha;Detalles_Notas;Codigo_Seguimiento\n";
+
+    (data.gastosIniciales || []).forEach(function(item) {
+      csvContent += ["Gasto Inicial", item.Lote || item.lote || "", item.Cultivo_Semilla || item.cultivo_semilla || "", item.Cantidad || 1, item.Costo_Total_COP || 0, item.Estado_Pago || "PAGADO", item.Fecha || "", item.Notas || "", item.Codigo_Seguimiento || ""].map(function(v) { return String(v).replace(/;/g, ","); }).join(";") + "\n";
+    });
+
+    (data.gastosDesarrollo || []).forEach(function(item) {
+      csvContent += ["Gasto Desarrollo", item.Lote || item.lote || "", item.Tipo_Insumo || item.tipo_insumo || "", item.Cantidad || 1, item.Costo_Total_COP || 0, item.Estado_Pago || "PAGADO", item.Fecha || "", item.Detalle || "", item.Codigo_Seguimiento || ""].map(function(v) { return String(v).replace(/;/g, ","); }).join(";") + "\n";
+    });
+
+    (data.ventas || []).forEach(function(item) {
+      csvContent += ["Venta Cosecha", item.Lote || item.lote || "", item.Producto_Vendido || item.producto_vendido || "", item.Cantidad || 1, item.Ingreso_Total_COP || 0, item.Estado_Pago || "PAGADO", item.Fecha || "", item.Comprador || "", item.Codigo_Seguimiento || ""].map(function(v) { return String(v).replace(/;/g, ","); }).join(";") + "\n";
+    });
+
+    // 2. SECCIÓN: INGRESOS EXTERNOS Y METAS DE RECOLECCIÓN
+    csvContent += "\n--- INGRESOS EXTERNOS Y METAS DE RECOLECCIÓN ---\n";
+    csvContent += "Tipo_Registro;ID;Fuente_Nombre;Monto_COP;Fecha;Categoria_Metodo;Notas\n";
+
+    (data.ingresosExternos || []).forEach(function(item) {
+      csvContent += ["Ingreso Externo", item.ID_Ingreso_Externo || "", item.Fuente_Origen || "", item.Monto_COP || 0, item.Fecha || "", item.Metodo_Pago || "", item.Notas || ""].map(function(v) { return String(v).replace(/;/g, ","); }).join(";") + "\n";
+    });
+
+    (data.metasRecoleccion || []).forEach(function(item) {
+      csvContent += ["Meta Recoleccion", item.ID_Meta || "", item.Nombre_Meta || "", item.Monto_Objetivo_COP || 0, item.Fecha_Limite || "", item.Categoria || "", item.Estado || ""].map(function(v) { return String(v).replace(/;/g, ","); }).join(";") + "\n";
+    });
+
+    (data.aportesMetas || []).forEach(function(item) {
+      csvContent += ["Aporte a Meta", item.ID_Aporte || "", item.Nombre_Meta || "", item.Monto_Aporte_COP || 0, item.Fecha || "", item.Origen_Fondos || "", item.Notas || ""].map(function(v) { return String(v).replace(/;/g, ","); }).join(";") + "\n";
+    });
+
+    return { success: true, csvContent: csvContent, filename: "Consolidado_General_Finca_Los_Sauces_" + formatDateNative(new Date()) + ".csv" };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
 function guardarFotoLote(datos) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();

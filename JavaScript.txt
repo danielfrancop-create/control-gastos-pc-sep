@@ -5054,99 +5054,81 @@
         }
 
         function exportDashboardToExcel() {
-            let csvContent = "\uFEFF"; // UTF-8 BOM for Spanish characters
-            csvContent += "CONSOLIDADO OPERATIVO Y FINANCIERO - FINCA LOS SAUCES\n";
-            csvContent += `Fecha del Reporte: ${new Date().toLocaleDateString('es-CO')}\n`;
-            csvContent += `Filtros: Lote ${document.getElementById("filterLote")?.value || "Todos"} | Cultivo ${document.getElementById("filterCultivo")?.value || "Todos"}\n\n`;
+            const triggerDownload = (csvData, filename) => {
+                const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename || `Consolidado_General_Finca_Los_Sauces_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
 
-            // Consolidated metrics headers
-            csvContent += "Métrica;Valor\n";
-            csvContent += `Utilidad Neta;${document.getElementById("kpiUtilidadNeta")?.textContent || "$0"}\n`;
-            csvContent += `Costo Unitario Promedio;${document.getElementById("kpiCostoUnitario")?.textContent || "$0"}\n`;
-            csvContent += `Margen ROI;${document.getElementById("kpiRoi")?.textContent || "0%"}\n`;
-            csvContent += `Pasivos Activos;${document.getElementById("kpiPasivos")?.textContent || "$0"}\n`;
-            csvContent += `Total Invertido vs Ventas;${document.getElementById("kpiInversionVsVentas")?.textContent || "$0"}\n\n`;
+            showLoader(true, "Generando consolidado para Excel...");
 
-            // Resumen de Lotes Table
-            csvContent += "DETALLE AGRONÓMICO POR LOTE Y CICLO\n";
-            csvContent += "Lote;Cultivo;Gastos Totales (COP);Ingresos (COP);Unidades Cosechadas;Costo Unitario (COP);Venta Promedio (COP);Utilidad Neta (COP);ROI (%)\n";
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(function(res) {
+                        showLoader(false);
+                        if (res && res.success && res.csvContent) {
+                            triggerDownload(res.csvContent, res.filename);
+                        } else {
+                            generateLocalExcelDownload(triggerDownload);
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        showLoader(false);
+                        generateLocalExcelDownload(triggerDownload);
+                    })
+                    .exportToExcelData();
+            } else {
+                showLoader(false);
+                generateLocalExcelDownload(triggerDownload);
+            }
+        }
 
-            const selectedLote = document.getElementById("filterLote")?.value || "Todos";
-            const subLotSet = new Set();
+        function generateLocalExcelDownload(triggerDownloadFn) {
+            let csvContent = "\uFEFF"; // UTF-8 BOM
+            csvContent += "FINCA LOS SAUCES - CONSOLIDADO GENERAL DE INFORMACIÓN\n";
+            csvContent += `Fecha de Exportación:;${new Date().toLocaleDateString('es-CO')}\n\n`;
+
+            // 1. SECCIÓN: GASTOS Y VENTAS AGRÍCOLAS
+            csvContent += "--- TRANSACCIONES AGRÍCOLAS Y LOTES ---\n";
+            csvContent += "Tipo_Registro;Lote;Cultivo_Insumo_Producto;Cantidad;Monto_COP;Estado_Pago;Fecha;Detalles_Notas;Codigo_Seguimiento\n";
+
             if (rawData) {
-                [...(rawData.ciclos || []), ...(rawData.gastosIniciales || []), ...(rawData.gastosDesarrollo || []), ...(rawData.ventas || [])].forEach(x => {
-                    const l = String(x.Lote || x.lote || x.Lote_Completo || "").trim();
-                    if (l) subLotSet.add(l);
+                (rawData.gastosIniciales || []).forEach(item => {
+                    csvContent += ["Gasto Inicial", item.Lote || item.lote || "", item.Cultivo_Semilla || item.cultivo_semilla || "", item.Cantidad || 1, item.Costo_Total_COP || 0, item.Estado_Pago || "PAGADO", item.Fecha || "", item.Notas || "", item.Codigo_Seguimiento || ""].map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
+                });
+
+                (rawData.gastosDesarrollo || []).forEach(item => {
+                    csvContent += ["Gasto Desarrollo", item.Lote || item.lote || "", item.Tipo_Insumo || item.tipo_insumo || "", item.Cantidad || 1, item.Costo_Total_COP || 0, item.Estado_Pago || "PAGADO", item.Fecha || "", item.Detalle || "", item.Codigo_Seguimiento || ""].map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
+                });
+
+                (rawData.ventas || []).forEach(item => {
+                    csvContent += ["Venta Cosecha", item.Lote || item.lote || "", item.Producto_Vendido || item.producto_vendido || "", item.Cantidad || 1, item.Ingreso_Total_COP || 0, item.Estado_Pago || "PAGADO", item.Fecha || "", item.Comprador || "", item.Codigo_Seguimiento || ""].map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
+                });
+
+                // 2. SECCIÓN: INGRESOS EXTERNOS Y METAS DE RECOLECCIÓN
+                csvContent += "\n--- INGRESOS EXTERNOS Y METAS DE RECOLECCIÓN ---\n";
+                csvContent += "Tipo_Registro;ID;Fuente_Nombre;Monto_COP;Fecha;Categoria_Metodo;Notas\n";
+
+                (rawData.ingresosExternos || []).forEach(item => {
+                    csvContent += ["Ingreso Externo", item.ID_Ingreso_Externo || "", item.Fuente_Origen || "", item.Monto_COP || 0, item.Fecha || "", item.Metodo_Pago || "", item.Notas || ""].map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
+                });
+
+                (rawData.metasRecoleccion || []).forEach(item => {
+                    csvContent += ["Meta Recoleccion", item.ID_Meta || "", item.Nombre_Meta || "", item.Monto_Objetivo_COP || 0, item.Fecha_Limite || "", item.Categoria || "", item.Estado || ""].map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
+                });
+
+                (rawData.aportesMetas || []).forEach(item => {
+                    csvContent += ["Aporte a Meta", item.ID_Aporte || "", item.Nombre_Meta || "", item.Monto_Aporte_COP || 0, item.Fecha || "", item.Origen_Fondos || "", item.Notas || ""].map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
                 });
             }
-            if (subLotSet.size === 0) {
-                get32SubLotsList().forEach(x => subLotSet.add(x));
-            }
 
-            const allSubLots = Array.from(subLotSet).sort();
-            let lotesAProcesar = [];
-
-            if (!selectedLote || selectedLote === "Todos") {
-                lotesAProcesar = allSubLots;
-            } else if (selectedLote.indexOf("Consolidado") !== -1) {
-                const mainName = selectedLote.replace(/\(Consolidado.*?\)/i, "").trim();
-                lotesAProcesar = allSubLots.filter(l => l === mainName || l.indexOf(mainName + " ") === 0 || l.indexOf(mainName) === 0);
-                if (lotesAProcesar.length === 0) lotesAProcesar = [mainName];
-            } else {
-                lotesAProcesar = [selectedLote];
-            }
-
-            lotesAProcesar.forEach(lote => {
-                const iniRow = (rawData.gastosIniciales || []).find(item => String(item.Lote || item.lote).trim() === lote);
-                const activeCycle = (rawData.ciclos || []).find(item => String(item.Lote || item.lote).trim() === lote && String(item.Estado || item.estado).toUpperCase() === 'EN PROCESO');
-                const cultivo = activeCycle ? activeCycle.Cultivo : (iniRow ? (iniRow.Cultivo_Semilla || iniRow.cultivo_semilla || "Por Definir") : "Sin Registrar");
-
-                const gIniTotal = (rawData.gastosIniciales || [])
-                    .filter(item => String(item.Lote || item.lote).trim() === lote)
-                    .reduce((sum, item) => sum + (Number(item.Costo_Total_COP || item.costo_total_cop) || 0), 0);
-
-                const gDesTotal = (rawData.gastosDesarrollo || [])
-                    .filter(item => String(item.Lote || item.lote).trim() === lote)
-                    .reduce((sum, item) => sum + (Number(item.Costo_Total_COP || item.costo_total_cop) || 0), 0);
-
-                const costoTotal = gIniTotal + gDesTotal;
-
-                const filteredVentas = (rawData.ventas || [])
-                    .filter(item => String(item.Lote || item.lote).trim() === lote);
-
-                const ventasTotal = filteredVentas.reduce((sum, item) => sum + (Number(item.Ingreso_Total_COP || item.ingreso_total_cop) || 0), 0);
-                const unidadesTotal = filteredVentas.reduce((sum, item) => sum + (Number(item.Cantidad || item.cantidad || item.Unidades_Cosechadas || item.unidades_cosechadas) || 0), 0);
-
-                const ganancia = ventasTotal - costoTotal;
-                let roi = costoTotal > 0 ? (ganancia / costoTotal) * 100 : 0;
-                const costoUnitario = unidadesTotal > 0 ? (costoTotal / unidadesTotal) : 0;
-                const precioVentaPromedio = unidadesTotal > 0 ? (ventasTotal / unidadesTotal) : 0;
-
-                if (costoTotal > 0 || ventasTotal > 0) {
-                    const rowData = [
-                        lote,
-                        cultivo,
-                        formatCOP(costoTotal),
-                        formatCOP(ventasTotal),
-                        unidadesTotal,
-                        unidadesTotal > 0 ? formatCOP(costoUnitario) : "-",
-                        unidadesTotal > 0 ? formatCOP(precioVentaPromedio) : "-",
-                        formatCOP(ganancia),
-                        `${roi.toFixed(1)}%`
-                    ];
-                    csvContent += rowData.map(v => String(v).replace(/;/g, ",")).join(";") + "\n";
-                }
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Consolidado_Lotes_Finca_Los_Sauces_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            triggerDownloadFn(csvContent, `Consolidado_General_Finca_Los_Sauces_${new Date().toISOString().split('T')[0]}.csv`);
         }
 
 
