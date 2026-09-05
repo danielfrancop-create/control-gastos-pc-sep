@@ -101,6 +101,30 @@
             </div>
         </div>
 
+        <!-- Mobile Bottom Navigation Bar (Thumb-friendly Mobile First) -->
+        <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-emerald-950/95 backdrop-blur-lg border-t border-emerald-800 z-40 px-2 py-1.5 shadow-2xl flex justify-around items-center">
+            <button onclick="showView('dashboard')" class="flex flex-col items-center justify-center py-1 px-2 text-white hover:text-amber-400 focus:outline-none min-h-[44px]">
+                <span class="text-lg">🏠</span>
+                <span class="text-[10px] font-bold">Inicio</span>
+            </button>
+            <button onclick="showView('data_entry')" class="flex flex-col items-center justify-center py-1 px-2 text-white hover:text-amber-400 focus:outline-none min-h-[44px]">
+                <span class="text-lg">📝</span>
+                <span class="text-[10px] font-bold">POS / Datos</span>
+            </button>
+            <button onclick="showView('mapa_lotes')" class="flex flex-col items-center justify-center py-1 px-2 text-white hover:text-amber-400 focus:outline-none min-h-[44px]">
+                <span class="text-lg">🗺️</span>
+                <span class="text-[10px] font-bold">Mapa Lotes</span>
+            </button>
+            <button onclick="showView('caja_general')" class="flex flex-col items-center justify-center py-1 px-2 text-white hover:text-amber-400 focus:outline-none min-h-[44px]">
+                <span class="text-lg">💰</span>
+                <span class="text-[10px] font-bold">Caja / Metas</span>
+            </button>
+            <button onclick="toggleMobileMenu()" class="flex flex-col items-center justify-center py-1 px-2 text-white hover:text-amber-400 focus:outline-none min-h-[44px]">
+                <span class="text-lg">☰</span>
+                <span class="text-[10px] font-bold">Más</span>
+            </button>
+        </nav>
+
         <!-- Mobile Drawer Navigation Overlay -->
         <div id="mobileMenuDrawer" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex justify-end">
             <div class="bg-emerald-950 border-l border-emerald-800 w-4/5 max-w-xs h-full p-6 flex flex-col justify-between overflow-y-auto space-y-6">
