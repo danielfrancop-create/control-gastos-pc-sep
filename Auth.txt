@@ -33,7 +33,7 @@ function getCurrentUserRole(providedEmail) {
       asegurarColumnas(sheet, headersNeeded);
     }
 
-    // 1. Obtener correo del usuario activo de Google de forma estricta
+    // 1. Obtener correo del usuario activo de Google
     var activeEmail = "";
     try {
       if (typeof Session !== "undefined" && Session.getActiveUser) {
@@ -48,39 +48,34 @@ function getCurrentUserRole(providedEmail) {
       }
     } catch (e) { effectiveEmail = ""; }
 
-    // Prioridad estricta: activeEmail de la sesión activa de Google
-    var userEmail = activeEmail ? activeEmail.trim().toLowerCase() : "";
-    if (!userEmail && providedEmail && typeof providedEmail === "string" && providedEmail.trim()) {
+    // Determinar correo a validar:
+    // 1) Correo explícito enviado desde cliente/URL, o 2) Session activeEmail, o 3) Session effectiveEmail
+    var userEmail = "";
+    if (providedEmail && typeof providedEmail === "string" && providedEmail.trim()) {
       userEmail = providedEmail.trim().toLowerCase();
+    } else if (activeEmail) {
+      userEmail = activeEmail.trim().toLowerCase();
+    } else if (effectiveEmail) {
+      userEmail = effectiveEmail.trim().toLowerCase();
     }
 
     var lastRow = sheet.getLastRow();
 
-    // Si la hoja Usuarios está vacía (solo encabezado), inicializar con la cuenta activa o efectiva como primer Administrador
+    // Si la hoja Usuarios está vacía (solo encabezado), inicializar con la cuenta activa/proporcionada como primer Administrador
     if (lastRow < 2) {
-      var initialAdmin = userEmail || activeEmail || effectiveEmail || "";
-      if (initialAdmin) {
-        initialAdmin = initialAdmin.trim().toLowerCase();
-        sheet.appendRow(["USR-001", initialAdmin, initialAdmin.split('@')[0], "admin", "ACTIVO"]);
-        return {
-          success: true,
-          registered: true,
-          active: true,
-          email: initialAdmin,
-          role: "admin"
-        };
-      }
+      var initialAdmin = userEmail || activeEmail || effectiveEmail || "admin@fincasauces.com";
+      initialAdmin = initialAdmin.trim().toLowerCase();
+      sheet.appendRow(["USR-001", initialAdmin, initialAdmin.split('@')[0], "admin", "ACTIVO"]);
       return {
         success: true,
-        registered: false,
-        active: false,
-        email: "",
-        role: "view",
-        error: "Acceso denegado: Usuario no autenticado o anónimo."
+        registered: true,
+        active: true,
+        email: initialAdmin,
+        role: "admin"
       };
     }
 
-    // Si el usuario no tiene correo activo (ventana de incógnito / anónimo), bloquear de inmediato
+    // Si no se proporcionó ningún correo ni se detectó en la sesión, solicitar ingreso
     if (!userEmail) {
       return {
         success: true,
@@ -88,7 +83,7 @@ function getCurrentUserRole(providedEmail) {
         active: false,
         email: "",
         role: "view",
-        error: "Acceso denegado: No se detectó ninguna cuenta de Google activa en la sesión."
+        error: "NO_EMAIL_DETECTED"
       };
     }
 

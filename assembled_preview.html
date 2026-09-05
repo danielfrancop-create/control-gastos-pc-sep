@@ -8375,7 +8375,14 @@
         let isUserRegistered = true;
 
         function checkCurrentUserRole() {
-            const savedEmail = localStorage.getItem("finca_user_email") || "";
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlEmail = urlParams.get("email") || "";
+            const savedEmail = urlEmail || localStorage.getItem("finca_user_email") || "";
+
+            if (savedEmail) {
+                localStorage.setItem("finca_user_email", savedEmail);
+            }
+
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(handleCurrentUserRoleSuccess)
