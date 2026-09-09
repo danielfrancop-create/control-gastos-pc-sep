@@ -138,17 +138,39 @@ function getCurrentUserRole(providedEmail) {
       colMap[h] = c;
     }
 
-    var emailColIdx = colMap["correo_electronico"] !== undefined ? colMap["correo_electronico"] : (colMap["email"] !== undefined ? colMap["email"] : 1);
-    var roleColIdx = colMap["rol"] !== undefined ? colMap["rol"] : (colMap["role"] !== undefined ? colMap["role"] : 3);
-    var statusColIdx = colMap["estado"] !== undefined ? colMap["estado"] : (colMap["status"] !== undefined ? colMap["status"] : 4);
+    var emailColIdx = -1;
+    var roleColIdx = -1;
+    var statusColIdx = -1;
+
+    for (var c = 0; c < headers.length; c++) {
+      var h = headers[c].toString().trim().toLowerCase();
+      colMap[h] = c;
+      if (emailColIdx === -1 && (h === "correo_electronico" || h === "correo electrónico" || h === "correo electronico" || h === "correo" || h === "email" || h === "mail")) {
+        emailColIdx = c;
+      }
+      if (roleColIdx === -1 && (h === "rol" || h === "role" || h === "perfil")) {
+        roleColIdx = c;
+      }
+      if (statusColIdx === -1 && (h === "estado" || h === "status" || h === "state")) {
+        statusColIdx = c;
+      }
+    }
+
+    if (emailColIdx === -1) emailColIdx = 1;
+    if (roleColIdx === -1) roleColIdx = 3;
+    if (statusColIdx === -1) statusColIdx = 4;
 
     var foundUser = null;
+    var cleanUserEmail = userEmail.replace(/\s+/g, "").toLowerCase();
+
     for (var r = 0; r < values.length; r++) {
       var row = values[r];
-      var rowEmail = row[emailColIdx] ? row[emailColIdx].toString().trim().toLowerCase() : "";
-      if (rowEmail === userEmail) {
+      var rowEmailRaw = row[emailColIdx] ? row[emailColIdx].toString().trim() : "";
+      var rowEmailClean = rowEmailRaw.replace(/\s+/g, "").toLowerCase();
+
+      if (rowEmailClean && rowEmailClean === cleanUserEmail) {
         var role = row[roleColIdx] ? row[roleColIdx].toString().trim().toLowerCase() : "view";
-        var status = row[statusColIdx] ? row[statusColIdx].toString().trim().toUpperCase() : "INACTIVO";
+        var rawStatus = row[statusColIdx] ? row[statusColIdx].toString().trim().toUpperCase() : "ACTIVO";
         var isA = (role === "admin");
 
         var getPerm = function(primaryKey, fallbackKey) {
@@ -158,7 +180,7 @@ function getCurrentUserRole(providedEmail) {
           if (fallbackKey && colMap[fallbackKey] !== undefined && row[colMap[fallbackKey]] !== undefined && row[colMap[fallbackKey]] !== "") {
             return row[colMap[fallbackKey]].toString().trim();
           }
-          return isA ? "Sí" : "Sí";
+          return "Sí";
         };
 
         var perms = {
@@ -171,9 +193,9 @@ function getCurrentUserRole(providedEmail) {
         };
 
         foundUser = {
-          email: rowEmail,
+          email: rowEmailClean,
           role: isA ? "admin" : "view",
-          status: status,
+          status: rawStatus,
           permissions: perms
         };
         break;
@@ -188,11 +210,13 @@ function getCurrentUserRole(providedEmail) {
         email: userEmail,
         role: "view",
         permissions: defaultNoPerms,
-        error: "Acceso denegado: El correo " + userEmail + " no está en la lista blanca de Usuarios_Autorizados."
+        error: "Acceso denegado: El correo " + userEmail + " no está registrado en la lista blanca de Usuarios_Autorizados de la finca."
       };
     }
 
-    var isActive = (foundUser.status === "ACTIVO" || foundUser.status === "ACTIVE");
+    var st = foundUser.status;
+    var isActive = (st === "" || st === "ACTIVO" || st === "ACTIVE" || st === "SI" || st === "SÍ" || st === "TRUE" || st === "1") &&
+                   (st !== "INACTIVO" && st !== "INACTIVE" && st !== "DESACTIVADO" && st !== "NO");
 
     return {
       success: true,
